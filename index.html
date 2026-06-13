@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Умный Радио-Плеер</title>
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background-color: #121212; font-family: sans-serif; }
+        .player-container { text-align: center; padding: 30px; background: #1e1e1e; border-radius: 12px; max-width: 420px; width: 100%; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h1 { color: #ffffff; font-size: 1.6rem; margin-bottom: 5px; }
+        p { color: #aaaaaa; font-size: 0.95rem; margin-bottom: 20px; }
+        audio { width: 100%; }
+    </style>
+</head>
+<body>
+
+    <div class="player-container">
+        <h1 id="title">Радио Петербург</h1>
+        <p id="status">Загрузка радио...</p>
+        <audio id="audioPlayer" controls></audio>
+    </div>
+
+    <script>
+        const player = document.getElementById('audioPlayer');
+        const statusText = document.getElementById('status');
+        const titleText = document.getElementById('title');
+
+        const LIVE_STREAM = "https://5-tv.ru";
+
+        // Здесь находятся все ваши 5 файлов, переделанные в правильные длинные строки
+        const playlist = [
+            "https://google.com",
+            "https://google.com",
+            "https://google.com",
+            "https://google.com",
+            "https://google.com"
+        ];
+
+        let currentTrackIndex = 0;
+        let isNightMode = false;
+
+        function checkSchedule() {
+            const now = new Date();
+            const hours = now.getHours();
+
+            // Ночной режим: с 01:00 ночи до 06:00 утра
+            if (hours >= 1 && hours < 6) {
+                if (!isNightMode) {
+                    isNightMode = true;
+                    currentTrackIndex = 0;
+                    playNightTrack(currentTrackIndex);
+                }
+            } else {
+                // Дневной режим: обычный прямой эфир
+                if (isNightMode || player.src !== LIVE_STREAM) {
+                    isNightMode = false;
+                    player.src = LIVE_STREAM;
+                    titleText.innerText = "Радио Петербург";
+                    statusText.innerText = "☀️ Прямой эфир доступен";
+                }
+            }
+        }
+
+        function playNightTrack(index) {
+            if (index < playlist.length) {
+                player.src = playlist[index];
+                titleText.innerText = "Ночной Архив";
+                statusText.innerText = `🌙 Играет запись передачи №${index + 1} из 5`;
+                player.play().catch(() => console.log("Ожидание клика пользователя"));
+            } else {
+                statusText.innerText = "🌙 Все 5 передач прослушаны. Ожидание утреннего эфира...";
+                player.pause();
+            }
+        }
+
+        // Автоматическое переключение на следующий файл, когда текущий доиграл
+        player.addEventListener('ended', () => {
+            if (isNightMode) {
+                currentTrackIndex++;
+                playNightTrack(currentTrackIndex);
+            }
+        });
+
+        // Проверяем время на часах каждые 30 секунд
+        setInterval(checkSchedule, 30000);
+        checkSchedule();
+    </script>
+</body>
+</html>
