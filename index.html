@@ -1,102 +1,57 @@
-<!DOCTYPE html>
+html<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — Автоматический архив</title>
+    <title>Радио Петербург — Автоматическое</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: #f8fafc; text-align: center; padding: 50px 20px; }
-        .player-card { background: #1e293b; padding: 40px 30px; border-radius: 20px; display: inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-width: 420px; width: 100%; border: 1px solid #334155; }
-        h1 { color: #38bdf8; margin: 0 0 5px 0; font-size: 26px; }
-        #status { color: #94a3b8; font-size: 16px; margin: 20px 0; min-height: 50px; }
-        audio { margin-top: 15px; width: 100%; }
-        .play-btn { background: #0284c7; border: none; color: white; padding: 16px 32px; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: bold; width: 100%; }
-        .play-btn:hover { background: #0369a1; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #0b1325;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .radio-container {
+            text-align: center;
+            background: #1e293b;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            width: 350px;
+        }
+        h1 {
+            font-size: 22px;
+            color: #38bdf8;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+        audio {
+            width: 100%;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-<div class="player-card">
-    <h1>РАДИО ПЕТЕРБУРГ</h1>
-    <p style="color: #64748b; font-size: 14px; margin: 0;">Синхронный архив вещания</p>
-    <div id="status">Нажмите кнопку ниже, чтобы подключиться к трансляции...</div>
-    <button class="play-btn" id="start-trigger" onclick="initRadio()">СЛУШАТЬ ЭФИР</button>
-    <audio id="audio-core" crossorigin="anonymous" controls style="display: none;"></audio>
-</div>
-
-<script>
-    const gDriveIds = {
-        1: "1mlSfPaSFbC7b6FrrArHO4-uoAcbzvggD",
-        2: "1hiIvPxpbrqgahJESreBlNOUb2t--GNRK",
-        3: "15csGZzongLuK6H6YssMVLY1RrSgVML-x",
-        4: "1NYCgvOJWCcdUIVIBc7uKRsVSeuhLwhO6",
-        5: "1m2QTXnecUxHRnrsXqhGIxNgRDQ-ykqBc"
-    };
-
-    const timeTable = [
-        { num: 1, startHour: 0,  endHour: 6,  name: "Ночной эфир (Запись №1)" },
-        { num: 2, startHour: 6,  endHour: 11, name: "Утреннее шоу (Запись №2)" },
-        // Мы временно поставили сюда 5 вместо 3, чтобы запустить плеер прямо сейчас без ожидания
-        { num: 5, startHour: 11, endHour: 16, name: "Дневной эфир (Запись №3)" }, 
-        { num: 4, startHour: 16, endHour: 20, name: "Вечерний блок (Запись №4)" },
-        { num: 5, startHour: 20, endHour: 24, name: "Вечернее шоу (Запись №5)" }
-    ];
-
-    const audio = document.getElementById('audio-core');
-    const statusText = document.getElementById('status');
-    const playButton = document.getElementById('start-trigger');
-
-    function getSpbTime() {
-        const options = { timeZone: 'Europe/Moscow', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false };
-        const parts = new Intl.DateTimeFormat('ru-RU', options).formatToParts(new Date());
-        const t = {};
-        parts.forEach(p => t[p.type] = parseInt(p.value));
-        return t;
-    }
-
-    function checkAndSync() {
-        const time = getSpbTime();
-        const activeProg = timeTable.find(p => time.hour >= p.startHour && time.hour < p.endHour);
-
-        if (!activeProg) {
-            statusText.innerHTML = "Технический перерыв.";
-            return;
-        }
-
-        const fileId = gDriveIds[activeProg.num];
-        const streamUrl = `https://google.com{fileId}`;
-        const passedHoursInSeconds = (time.hour - activeProg.startHour) * 3600;
-        const currentSecondOfBroadcast = passedHoursInSeconds + (time.minute * 60) + time.second;
-
-        statusText.innerHTML = `Время в СПб: <b>${String(time.hour).padStart(2,'0')}:${String(time.minute).padStart(2,'0')}</b><br>В эфире: <span style="color: #38bdf8;">${activeProg.name}</span>`;
-
-        if (audio.src !== streamUrl) {
-            audio.src = streamUrl;
-            audio.load();
-            audio.onloadedmetadata = function() {
-                if (currentSecondOfBroadcast > audio.duration) {
-                    audio.currentTime = currentSecondOfBroadcast % audio.duration;
-                } else {
-                    audio.currentTime = currentSecondOfBroadcast;
-                }
-            };
-        }
-    }
-
-    function initRadio() {
-        checkAndSync();
-        audio.play()
-            .then(() => {
-                playButton.style.display = 'none';
-                audio.style.display = 'block';
-                setInterval(checkAndSync, 15000);   
-            })
-            .catch(err => {
-                statusText.innerText = "Доступ заблокирован Google Диском. Убедитесь, что в Google Диске для файлов включен доступ 'Все, у кого есть ссылка'.";
-                console.error(err);
-            });
-    }
-</script>
+    <div class="radio-container">
+        <h1>Радио Петербург</h1>
+        <div class="subtitle">Прямой эфир вещания</div>
+        
+        <audio controls autoplay>
+            <source src="https://radio.5-tv.ru/radio.mp3" type="audio/mpeg">
+            Ваш браузер не поддерживает элемент audio.
+        </audio>
+    </div>
 
 </body>
 </html>
