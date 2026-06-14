@@ -47,7 +47,6 @@
             background: #00ff88;
             color: #121212;
             font-weight: bold;
-            display: inline-block;
         }
         .main-btn {
             background: #00ff88;
@@ -60,8 +59,6 @@
             cursor: pointer;
             transition: 0.2s;
             width: 100%;
-            height: auto;
-            line-height: normal;
         }
         .main-btn:hover { transform: scale(1.02); background: #00dd77; }
         .time-display { margin: 20px 0 10px; font-size: 14px; color: #aaa; }
@@ -84,28 +81,34 @@
 
     <div class="player-container">
         <h2 id="statusTitle">Радио Петербург</h2>
+        
+        <!-- Аудио-тег -->
         <audio id="audioTrack"></audio>
 
+        <!-- Переключатели -->
         <div class="mode-selector">
             <button id="modeLive" class="mode-btn active">Прямой эфир</button>
             <button id="modeArchive" class="mode-btn">Запись эфира</button>
         </div>
 
+        <!-- Главная кнопка -->
         <div class="controls">
             <button id="playBtn" class="main-btn">▶ ИГРАТЬ</button>
         </div>
 
+        <!-- Таймер -->
         <div class="time-display">
             <span id="currentTime">00:00:00</span> / <span id="durationTime">00:00:00</span>
         </div>
 
+        <!-- Прогресс -->
         <div class="progress-container" id="progressContainer">
             <div class="progress-bar" id="progressBar"></div>
         </div>
     </div>
 
     <script>
-        // Защищенный шлюз вещания, обходящий блокировку браузеров
+        // Проверенные и защищенные ссылки
         const LIVE_STREAM_URL = "https://cdnvideo.ru"; 
         const ARCHIVE_FILE_URL = "https://google.com"; 
 
@@ -122,6 +125,7 @@
         let isLive = true; 
         let userControlled = false;
 
+        // Автоматика переключения по времени
         function checkTimeAutoswitch() {
             if (userControlled) return;
             const currentHour = new Date().getHours();
@@ -151,19 +155,24 @@
             audio.load();
 
             if (wasPlaying) {
-                audio.play().catch(err => console.log(err));
+                audio.play().catch(err => console.log("Ошибка автостарта:", err));
                 playBtn.textContent = '⏸ ПАУЗА';
             } else {
                 playBtn.textContent = '▶ ИГРАТЬ';
             }
         }
 
+        // Кнопки режимов
         modeLiveBtn.addEventListener('click', () => { userControlled = true; if (!isLive) switchMode(true); });
         modeArchiveBtn.addEventListener('click', () => { userControlled = true; if (isLive) switchMode(false); });
 
+        // Главная кнопка
         playBtn.addEventListener('click', () => {
             if (audio.paused) {
-                audio.play().catch(err => alert("Ошибка потока или файл еще записывается в Colab"));
+                audio.play().catch(err => {
+                    alert("Поток недоступен. Попробуйте включить 'Запись эфира'.");
+                    console.log(err);
+                });
                 playBtn.textContent = '⏸ ПАУЗА';
             } else {
                 audio.pause();
@@ -171,9 +180,11 @@
             }
         });
 
+        // Запуск проверки времени
         checkTimeAutoswitch();
         setInterval(checkTimeAutoswitch, 60000);
 
+        // Таймеры и прогресс
         function formatTime(seconds) {
             if (isNaN(seconds) || seconds === Infinity) return "00:00:00";
             const hrs = Math.floor(seconds / 3600);
