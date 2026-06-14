@@ -15,37 +15,38 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
+    # 1. Скачиваем текущие файлы сайта, чтобы добавить к ним новую запись
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    # 2. Устанавливаем утилиту записи
     - name: Install Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg rclone
+        sudo apt-get install -y ffmpeg
 
-    - name: Record and Upload Audio
-      env:
-        RCLONE_CONFIG_GDRIVE_TYPE: drive
-        RCLONE_CONFIG_GDRIVE_SCOPE: drive
-        RCLONE_CONFIG_GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
+    # 3. Записываем 1 час эфира (Радио Ваня для стабильности)
+    - name: Record Audio
       run: |
         export TZ="Europe/Moscow"
         CURRENT_HOUR=$(date +%H)
         
-        # Определяем номер программы по времени её старта
         if [ "$CURRENT_HOUR" -eq "08" ] || [ "$CURRENT_HOUR" -eq "09" ]; then PROG_NUM=1;
         elif [ "$CURRENT_HOUR" -eq "11" ] || [ "$CURRENT_HOUR" -eq "12" ]; then PROG_NUM=2;
         elif [ "$CURRENT_HOUR" -eq "14" ] || [ "$CURRENT_HOUR" -eq "15" ] ; then PROG_NUM=3;
         elif [ "$CURRENT_HOUR" -eq "17" ] || [ "$CURRENT_HOUR" -eq "18" ]; then PROG_NUM=4;
         else PROG_NUM=5; fi
         
-        FILE_NAME="program_${PROG_NUM}.mp3"
-        
-        echo "Запуск записи 1 часа радио для программы №${PROG_NUM}..."
-        
-        # Записываем поток Радио Ваня (проверим на 30 секундах для быстрого теста, затем вернем 3600)
+        # Записываем ровно 1 час (3600 секунд) аудио
         ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
                -i "https://radiokrug.ru" \
-               -t 30 -acodec libmp3lame -b:a 128k "$FILE_NAME" -y || true
-        
-        echo "Запись завершена. Отправка напрямую в Google Диск..."
-        
-        # Загружаем файл напрямую в корень вашего Google Диска с перезаписью старого
-        rclone copy "$FILE_NAME" gdrive: --progress
+               -t 3600 -acodec libmp3lame -b:a 128k "program_${PROG_NUM}.mp3" -y || true
+
+    # 4. Автоматически сохраняем готовый файл прямо в репозиторий GitHub
+    - name: Save File to GitHub
+      run: |
+        git config --global user.name "Radio-Bot"
+        git config --global user.email "bot@github.com"
+        git add *.mp3
+        git commit -m "Авто-обновление записи эфира" || exit 0
+        git push
