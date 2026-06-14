@@ -3,139 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — Интерактивный Плеер</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0b1325;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .radio-container {
-            text-align: center;
-            background: #1e293b;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            width: 350px;
-        }
-        h1 {
-            font-size: 22px;
-            color: #38bdf8;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-        }
-        .archive { background-color: #10b981; color: white; }
-        .live { background-color: #ef4444; color: white; }
-        
-        /* Стили для красивой большой кнопки */
-        .play-btn {
-            background: linear-gradient(135deg, #38bdf8, #0284c7);
-            border: none;
-            color: white;
-            padding: 15px 40px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
-            transition: all 0.2s ease;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            width: 100%;
-        }
-        .play-btn:hover {
-            transform: scale(1.03);
-            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
-        }
-        .play-btn:active {
-            transform: scale(0.98);
-        }
-        /* Скрываем стандартный некрасивый плеер */
-        audio {
-            display: none;
-        }
-    </style>
+    <title>Радио Петербург — Архив</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <div class="radio-container">
-        <h1>Радио Петербург</h1>
-        <div id="status" class="status-badge">Определение времени...</div>
+    <div class="player-container">
+        <h2 id="statusTitle">Радио Петербург</h2>
         
-        <!-- Скрытый аудио-плеер -->
-        <audio id="radioPlayer">
-            <source id="audioSource" src="" type="audio/mpeg">
-        </audio>
+        <!-- Скрытый аудио-тег -->
+        <audio id="audioTrack"></audio>
 
-        <!-- Большая кнопка управления -->
-        <button id="playButton" class="play-btn" onclick="togglePlay()">▶ Включить радио</button>
+        <!-- Кнопки переключения режимов (Радио или Архив) -->
+        <div class="mode-selector">
+            <button id="modeLive" class="mode-btn active">Прямой эфир</button>
+            <button id="modeArchive" class="mode-btn">Запись эфира</button>
+        </div>
+
+        <!-- Главная кнопка запуск/пауза -->
+        <div class="controls">
+            <button id="playBtn" class="main-btn">▶ ИГРАТЬ</button>
+        </div>
+
+        <!-- Таймер времени -->
+        <div class="time-display">
+            <span id="currentTime">00:00:00</span> / <span id="durationTime">00:00:00</span>
+        </div>
+
+        <!-- Полоса перемотки -->
+        <div class="progress-container" id="progressContainer">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
     </div>
 
-    <script>
-        const player = document.getElementById('radioPlayer');
-        const source = document.getElementById('audioSource');
-        const statusBadge = document.getElementById('status');
-        const playButton = document.getElementById('playButton');
-
-        function checkTime() {
-            const currentHour = new Date().getHours(); 
-            let newSrc = "";
-
-            // Правило: Ночной архив строго с 00:00 ночи до 07:59 утра
-            if (currentHour >= 0 && currentHour < 8) {
-                newSrc = "record.mp3";
-                statusBadge.textContent = "💾 АРХИВ ЭФИРА (00:00 - 08:00)";
-                statusBadge.className = "status-badge archive";
-            } 
-            // В дневное время включаем Прямой эфир радиостанции
-            else {
-                newSrc = "https://5-tv.ru";
-                statusBadge.textContent = "🔴 ПРЯМОЙ ЭФИР ПРЯМО СЕЙЧАС";
-                statusBadge.className = "status-badge live";
-            }
-
-            if (source.getAttribute('src') !== newSrc) {
-                source.setAttribute('src', newSrc);
-                player.load();
-            }
-        }
-
-        // Функция запуска и остановки звука по кнопке
-        function togglePlay() {
-            if (player.paused) {
-                checkTime(); // Перед запуском проверяем время, чтобы включить нужный поток
-                player.play();
-                playButton.textContent = "⏸ Остановить звук";
-                playButton.style.background = "linear-gradient(135deg, #ef4444, #b91c1c)";
-                playButton.style.boxShadow = "0 4px 15px rgba(239, 68, 68, 0.4)";
-            } else {
-                player.pause();
-                playButton.textContent = "▶ Включить радио";
-                playButton.style.background = "linear-gradient(135deg, #38bdf8, #0284c7)";
-                playButton.style.boxShadow = "0 4px 15px rgba(56, 189, 248, 0.4)";
-            }
-        }
-
-        // Первичная проверка времени для отображения статуса
-        checkTime();
-        // Проверяем время каждую минуту
-        setInterval(checkTime, 60000);
-    </script>
-
+    <script src="script.js"></script>
 </body>
 </html>
