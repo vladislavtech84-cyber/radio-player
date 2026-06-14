@@ -3,7 +3,6 @@ name: Hourly Radio Recorder
 on:
   schedule:
     # Запуск 5 раз в день по МСК: в 08:00, 11:00, 14:00, 17:00, 20:00
-    # Время в cron указывается по UTC (МСК минус 3 часа)
     - cron: '0 5 * * *'
     - cron: '0 8 * * *'
     - cron: '0 11 * * *'
@@ -19,11 +18,13 @@ jobs:
     - name: Install Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg python3-requests
+        sudo apt-get install -y ffmpeg rclone
 
     - name: Record and Upload Audio
       env:
-        WEBAPP_URL: ${{ secrets.GOOGLE_WEBAPP_URL }}
+        RCLONE_CONFIG_GDRIVE_TYPE: drive
+        RCLONE_CONFIG_GDRIVE_SCOPE: drive
+        RCLONE_CONFIG_GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
       run: |
         export TZ="Europe/Moscow"
         CURRENT_HOUR=$(date +%H)
@@ -37,23 +38,14 @@ jobs:
         
         FILE_NAME="program_${PROG_NUM}.mp3"
         
-        echo "Запуск записи радио для программы №${PROG_NUM}..."
+        echo "Запуск записи 1 часа радио для программы №${PROG_NUM}..."
         
-        # Записываем поток с флагами авто-переподключения при сбое сети
+        # Записываем поток Радио Ваня (проверим на 30 секундах для быстрого теста, затем вернем 3600)
         ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
-               -i "https://radiokrug.ru/radio/vanya/icecast.audio" \
-               -t 3600 -acodec libmp3lame -b:a 128k "$FILE_NAME" -y || true
+               -i "https://radiokrug.ru" \
+               -t 30 -acodec libmp3lame -b:a 128k "$FILE_NAME" -y || true
         
-        echo "Запись завершена или остановлена. Отправка файла в Google Диск..."
+        echo "Запись завершена. Отправка напрямую в Google Диск..."
         
-        # Проверяем, создался ли файл, и если он есть — отправляем в Google
-        python3 -c "
-        import os, base64, requests
-        if os.path.exists('$FILE_NAME') and os.path.getsize('$FILE_NAME') > 0:
-            with open('$FILE_NAME', 'rb') as f:
-                encoded = base64.b64encode(f.read()).decode('utf-8')
-            res = requests.post(os.environ['WEBAPP_URL'], json={'fileName': '$FILE_NAME', 'fileBytes': encoded})
-            print('Ответ сервера:', res.text)
-        else:
-            print('Ошибка: Файл записи пуст или не был создан.')
-        "
+        # Загружаем файл напрямую в корень вашего Google Диска с перезаписью старого
+        rclone copy "$FILE_NAME" gdrive: --progress
