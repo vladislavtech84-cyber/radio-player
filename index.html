@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — Смарт Таймер</title>
+    <title>Радио Петербург — Ночной Ночной Автомат</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -39,8 +39,8 @@
             margin-bottom: 25px;
             text-transform: uppercase;
         }
-        .live { background-color: #ef4444; color: white; }
         .archive { background-color: #10b981; color: white; }
+        .off { background-color: #64748b; color: white; }
         audio {
             width: 100%;
             margin-top: 10px;
@@ -68,27 +68,30 @@
             const currentHour = new Date().getHours(); 
             let newSrc = "";
 
-            // 1. Правило для Прямого эфира: строго с 7:00 до 8:00 утра
-            if (currentHour === 7) {
-                newSrc = "https://5-tv.ru";
-                statusBadge.textContent = "🔴 ПРЯМОЙ ЭФИР (07:00 - 08:00)";
-                statusBadge.className = "status-badge live";
-            } 
-            // 2. Во все остальные часы суток крутим записанный 6-часовой архив
-            else {
+            // Правило: Ночной архив строго с 00:00 ночи до 07:59 утра
+            if (currentHour >= 0 && currentHour < 8) {
                 newSrc = "record.mp3";
-                statusBadge.textContent = "💾 АРХИВ ЭФИРА (6 ЧАСОВ ЗАПИСИ)";
+                statusBadge.textContent = "💾 АРХИВ ЭФИРА (00:00 - 08:00)";
                 statusBadge.className = "status-badge archive";
+            } 
+            // В любое другое время дня радио полностью выключено
+            else {
+                newSrc = "";
+                statusBadge.textContent = "⚪ ЭФИР ВЫКЛЮЧЕН";
+                statusBadge.className = "status-badge off";
             }
 
             if (source.getAttribute('src') !== newSrc) {
                 source.setAttribute('src', newSrc);
                 player.load();
+                if (newSrc === "") {
+                    player.pause();
+                }
             }
         }
 
         checkTimeAndPlay();
-        // Раз в минуту проверяем время для автоматического переключения
+        // Проверяем время каждую минуту для автоматического включения/выключения
         setInterval(checkTimeAndPlay, 60000);
     </script>
 
