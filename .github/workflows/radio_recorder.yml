@@ -2,7 +2,7 @@ name: Scheduled Radio Recorder
 
 on:
   schedule:
-    # Робот будет просыпаться в 12:00 UTC (15:00 МСК) и в 13:00 UTC (16:00 МСК)
+    # 12:00 UTC (15:00 МСК) и 13:00 UTC (16:00 МСК)
     - cron: '0 12,13 * * *'
   workflow_dispatch:
 
@@ -31,10 +31,10 @@ jobs:
           echo "Запуск по расписанию. Час UTC: $CURRENT_HOUR"
           
           if [ "$CURRENT_HOUR" -eq 12 ]; then
-            # В 15:00 МСК (12 UTC) — пишем 1 час (3600 сек)
+            # В 15:00 МСК — пишем 1 час
             ffmpeg -i "https://5-tv.ru" -t 3600 -c copy record.mp3
           elif [ "$CURRENT_HOUR" -eq 13 ]; then
-            # В 16:00 МСК (13 UTC) — пишем 5 часов (18000 сек)
+            # В 16:00 МСК — пишем 5 часов подряд до 21:00
             ffmpeg -i "https://5-tv.ru" -t 18000 -c copy record.mp3
           fi
         fi
