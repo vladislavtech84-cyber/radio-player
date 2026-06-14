@@ -41,7 +41,7 @@ jobs:
         
         # Записываем поток с флагами авто-переподключения при сбое сети
         ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
-               -i "https://hostingradio.ru" \
+               -i "https://radiokrug.ru/radio/vanya/icecast.audio" \
                -t 3600 -acodec libmp3lame -b:a 128k "$FILE_NAME" -y || true
         
         echo "Запись завершена или остановлена. Отправка файла в Google Диск..."
