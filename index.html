@@ -1,4 +1,4 @@
-html<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -26,18 +26,26 @@ html<!DOCTYPE html>
         h1 {
             font-size: 22px;
             color: #38bdf8;
-            margin-bottom: 5px;
+            margin-bottom: 25px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
+        .player-block {
+            margin-bottom: 25px;
+            background: rgba(255,255,255,0.03);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
         .subtitle {
-            font-size: 13px;
+            font-size: 12px;
             color: #94a3b8;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            letter-spacing: 0.5px;
         }
         audio {
             width: 100%;
-            margin-top: 10px;
         }
     </style>
 </head>
@@ -45,12 +53,24 @@ html<!DOCTYPE html>
 
     <div class="radio-container">
         <h1>Радио Петербург</h1>
-        <div class="subtitle">Прямой эфир вещания</div>
         
-        <audio controls autoplay>
-            <source src="https://radio.5-tv.ru/radio.mp3" type="audio/mpeg">
-            Ваш браузер не поддерживает элемент audio.
-        </audio>
+        <!-- Блок 1: Прямой эфир -->
+        <div class="player-block">
+            <div class="subtitle" style="color: #ef4444;">🔴 ПРЯМОЙ ЭФИР (06:00 - 01:00)</div>
+            <audio controls>
+                <source src="https://5-tv.ru" type="audio/mpeg">
+                Ваш браузер не поддерживает элемент audio.
+            </audio>
+        </div>
+
+        <!-- Блок 2: Ночной архив -->
+        <div class="player-block">
+            <div class="subtitle" style="color: #10b981;">💾 ЗАПИСЬ ЭФИРА (01:00 - 06:00)</div>
+            <audio controls>
+                <source src="record.mp3" type="audio/mpeg">
+                Запись еще не создана сервером.
+            </audio>
+        </div>
     </div>
 
 </body>
