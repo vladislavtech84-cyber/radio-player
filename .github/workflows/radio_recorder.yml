@@ -37,17 +37,23 @@ jobs:
         
         FILE_NAME="program_${PROG_NUM}.mp3"
         
-        echo "Запуск записи 1 часа радио для программы №${PROG_NUM}..."
+        echo "Запуск записи радио для программы №${PROG_NUM}..."
         
-        # Записываем ровно 1 час (3600 сек) потока Радио Петербург
-        ffmpeg -i "https://hostingradio.ru" -t 3600 -acodec libmp3lame -b:a 128k "$FILE_NAME" -y
+        # Записываем поток с флагами авто-переподключения при сбое сети
+        ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
+               -i "https://hostingradio.ru" \
+               -t 3600 -acodec libmp3lame -b:a 128k "$FILE_NAME" -y || true
         
-        echo "Запись завершена. Отправка файла в Google Диск..."
+        echo "Запись завершена или остановлена. Отправка файла в Google Диск..."
         
+        # Проверяем, создался ли файл, и если он есть — отправляем в Google
         python3 -c "
         import os, base64, requests
-        with open('$FILE_NAME', 'rb') as f:
-            encoded = base64.b64encode(f.read()).decode('utf-8')
-        res = requests.post(os.environ['WEBAPP_URL'], json={'fileName': '$FILE_NAME', 'fileBytes': encoded})
-        print(res.text)
+        if os.path.exists('$FILE_NAME') and os.path.getsize('$FILE_NAME') > 0:
+            with open('$FILE_NAME', 'rb') as f:
+                encoded = base64.b64encode(f.read()).decode('utf-8')
+            res = requests.post(os.environ['WEBAPP_URL'], json={'fileName': '$FILE_NAME', 'fileBytes': encoded})
+            print('Ответ сервера:', res.text)
+        else:
+            print('Ошибка: Файл записи пуст или не был создан.')
         "
