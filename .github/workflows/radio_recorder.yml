@@ -1,9 +1,9 @@
-name: Daily Radio Recorder
+name: Scheduled Radio Recorder
 
 on:
   schedule:
-    # Запуск каждый день в 18:00 по UTC (это ровно 21:00 по Московскому времени)
-    - cron: '0 18 * * *'
+    # 11:00 UTC (14:00 МСК) и 13:00 UTC (16:00 МСК)
+    - cron: '0 11,13 * * *'
   workflow_dispatch:
 
 jobs:
@@ -18,15 +18,23 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg
 
-    - name: Record Radio until 1 AM
-      # 14400 секунд — это ровно 4 часа записи (с 21:00 до 01:00 ночи)
+    - name: Record Selected Intervals
       run: |
-        timeout 14400 ffmpeg -i "https://5-tv.ru" -c copy record.mp3 || true
+        CURRENT_HOUR=$(date +%H)
+        
+        # Если сейчас 11:00 UTC (14:00 МСК), пишем 1 час (3600 сек)
+        if [ "$CURRENT_HOUR" -eq 11 ]; then
+          timeout 3600 ffmpeg -i "https://5-tv.ru" -c copy record.mp3 || true
+        
+        # Если сейчас 13:00 UTC (16:00 МСК), пишем 5 часов подряд до 21:00 МСК (18000 сек)
+        elif [ "$CURRENT_HOUR" -eq 13 ]; then
+          timeout 18000 ffmpeg -i "https://5-tv.ru" -c copy record.mp3 || true
+        fi
 
     - name: Save and Upload to Site
       run: |
         git config --global user.name "GitHub Actions Bot"
         git config --global user.email "actions@github.com"
         git add record.mp3
-        git commit -m "Запись эфира завершена в 01:00" || exit 0
+        git commit -m "Обновлена запись эфира: $(date +'%Y-%m-%d %H:%M')" || exit 0
         git push
