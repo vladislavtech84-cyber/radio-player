@@ -1,5 +1,6 @@
-ru"; 
-const ARCHIVE_FILE_URL = "https://google.com";
+// Настройки ссылок
+const LIVE_STREAM_URL = "http://5-tv.ru"; 
+const ARCHIVE_FILE_URL = "https://google.com"; 
 
 const audio = document.getElementById('audioTrack');
 const playBtn = document.getElementById('playBtn');
@@ -36,13 +37,13 @@ function switchMode(wantLive) {
 
     // Меняем активный вид кнопок сверху
     if (isLive) {
-        modeLiveBtn.classList.add('active');
-        modeArchiveBtn.classList.remove('active');
-        statusTitle.textContent = "Радио Петербург (LIVE)";
+        if (modeLiveBtn) modeLiveBtn.classList.add('active');
+        if (modeArchiveBtn) modeArchiveBtn.classList.remove('active');
+        if (statusTitle) statusTitle.textContent = "Радио Петербург (LIVE)";
     } else {
-        modeLiveBtn.classList.remove('active');
-        modeArchiveBtn.classList.add('active');
-        statusTitle.textContent = "Играет Архив Эфира";
+        if (modeLiveBtn) modeLiveBtn.classList.remove('active');
+        if (modeArchiveBtn) modeArchiveBtn.classList.add('active');
+        if (statusTitle) statusTitle.textContent = "Играет Архив Эфира";
     }
 
     // Подгружаем нужный звук
@@ -52,33 +53,39 @@ function switchMode(wantLive) {
     // Если плеер уже пел — продолжаем петь новый источник сразу
     if (wasPlaying) {
         audio.play().catch(err => console.log("Браузер заблокировал автостарт:", err));
-        playBtn.textContent = '⏸ ПАУЗА';
+        if (playBtn) playBtn.textContent = '⏸ ПАУЗА';
     } else {
-        playBtn.textContent = '▶ ИГРАТЬ';
+        if (playBtn) playBtn.textContent = '▶ ИГРАТЬ';
     }
 }
 
 // 3. Ручное управление кнопками режимов (Работает ВСЕГДА независимо от времени)
-modeLiveBtn.addEventListener('click', () => {
-    userControlled = true; // Отключаем автоматику по времени, так как пользователь нажал сам
-    if (!isLive) switchMode(true);
-});
+if (modeLiveBtn) {
+    modeLiveBtn.addEventListener('click', () => {
+        userControlled = true; // Отключаем автоматику по времени
+        if (!isLive) switchMode(true);
+    });
+}
 
-modeArchiveBtn.addEventListener('click', () => {
-    userControlled = true; // Отключаем автоматику
-    if (isLive) switchMode(false);
-});
+if (modeArchiveBtn) {
+    modeArchiveBtn.addEventListener('click', () => {
+        userControlled = true; // Отключаем автоматику
+        if (isLive) switchMode(false);
+    });
+}
 
 // Кнопка Играть / Пауза
-playBtn.addEventListener('click', () => {
-    if (audio.paused) {
-        audio.play();
-        playBtn.textContent = '⏸ ПАУЗА';
-    } else {
-        audio.pause();
-        playBtn.textContent = '▶ ИГРАТЬ';
-    }
-});
+if (playBtn) {
+    playBtn.addEventListener('click', () => {
+        if (audio.paused) {
+            audio.play();
+            playBtn.textContent = '⏸ ПАУЗА';
+        } else {
+            audio.pause();
+            playBtn.textContent = '▶ ИГРАТЬ';
+        }
+    });
+}
 
 // Инициализация при заходе на сайт + проверка времени каждую минуту
 checkTimeAutoswitch();
@@ -94,27 +101,28 @@ function formatTime(seconds) {
 }
 
 audio.addEventListener('timeupdate', () => {
-    currentTimeEl.textContent = formatTime(audio.currentTime);
+    if (currentTimeEl) currentTimeEl.textContent = formatTime(audio.currentTime);
     if (audio.duration && audio.duration !== Infinity) {
-        const progressPercent = (audio.currentTime / audio.duration) * 100;
-        progressBar.style.width = `${progressPercent}%`;
+        if (progressBar) progressBar.style.width = `${(audio.currentTime / audio.duration) * 100}%`;
     } else {
-        progressBar.style.width = "100%"; // Для LIVE полоса всегда полная
+        if (progressBar) progressBar.style.width = "100%"; // Для LIVE полная полоса
     }
 });
 
 audio.addEventListener('loadedmetadata', () => {
-    durationTimeEl.textContent = (audio.duration === Infinity) ? "LIVE" : formatTime(audio.duration);
+    if (durationTimeEl) durationTimeEl.textContent = (audio.duration === Infinity) ? "LIVE" : formatTime(audio.duration);
 });
 
 // Клик по полосе для перемотки (работает только в Архиве)
-progressContainer.addEventListener('click', (e) => {
-    if (!isLive && audio.duration) {
-        const width = progressContainer.clientWidth;
-        const clickX = e.offsetX;
-        audio.currentTime = (clickX / width) * audio.duration;
-    }
-});
+if (progressContainer) {
+    progressContainer.addEventListener('click', (e) => {
+        if (!isLive && audio.duration) {
+            const width = progressContainer.clientWidth;
+            const clickX = e.offsetX;
+            audio.currentTime = (clickX / width) * audio.duration;
+        }
+    });
+}
 
 // Автопереключение на архив, если днем упал поток радио
 audio.addEventListener('error', () => { if (isLive && !userControlled) switchMode(false); });
