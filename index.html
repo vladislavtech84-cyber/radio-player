@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — Автоматическое</title>
+    <title>Радио Петербург — Смарт Таймер</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -26,26 +26,24 @@
         h1 {
             font-size: 22px;
             color: #38bdf8;
-            margin-bottom: 25px;
+            margin-bottom: 5px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .player-block {
-            margin-bottom: 25px;
-            background: rgba(255,255,255,0.03);
-            padding: 15px;
-            border-radius: 8px;
-            border: 1px solid #334155;
-        }
-        .subtitle {
-            font-size: 12px;
-            color: #94a3b8;
-            margin-bottom: 10px;
+        .status-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
             font-weight: bold;
-            letter-spacing: 0.5px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
         }
+        .live { background-color: #ef4444; color: white; }
+        .archive { background-color: #10b981; color: white; }
         audio {
             width: 100%;
+            margin-top: 10px;
         }
     </style>
 </head>
@@ -53,25 +51,46 @@
 
     <div class="radio-container">
         <h1>Радио Петербург</h1>
+        <div id="status" class="status-badge">Проверка времени...</div>
         
-        <!-- Блок 1: Прямой эфир -->
-        <div class="player-block">
-            <div class="subtitle" style="color: #ef4444;">🔴 ПРЯМОЙ ЭФИР (06:00 - 01:00)</div>
-            <audio controls>
-                <source src="https://5-tv.ru" type="audio/mpeg">
-                Ваш браузер не поддерживает элемент audio.
-            </audio>
-        </div>
-
-        <!-- Блок 2: Ночной архив -->
-        <div class="player-block">
-            <div class="subtitle" style="color: #10b981;">💾 ЗАПИСЬ ЭФИРА (01:00 - 06:00)</div>
-            <audio controls>
-                <source src="record.mp3" type="audio/mpeg">
-                Запись еще не создана сервером.
-            </audio>
-        </div>
+        <audio id="radioPlayer" controls autoplay>
+            <source id="audioSource" src="" type="audio/mpeg">
+            Ваш браузер не поддерживает элемент audio.
+        </audio>
     </div>
+
+    <script>
+        function checkTimeAndPlay() {
+            const player = document.getElementById('radioPlayer');
+            const source = document.getElementById('audioSource');
+            const statusBadge = document.getElementById('status');
+            
+            const currentHour = new Date().getHours(); 
+            let newSrc = "";
+
+            // 1. Правило для Прямого эфира: строго с 7:00 до 8:00 утра
+            if (currentHour === 7) {
+                newSrc = "https://5-tv.ru";
+                statusBadge.textContent = "🔴 ПРЯМОЙ ЭФИР (07:00 - 08:00)";
+                statusBadge.className = "status-badge live";
+            } 
+            // 2. Во все остальные часы суток крутим записанный 6-часовой архив
+            else {
+                newSrc = "record.mp3";
+                statusBadge.textContent = "💾 АРХИВ ЭФИРА (6 ЧАСОВ ЗАПИСИ)";
+                statusBadge.className = "status-badge archive";
+            }
+
+            if (source.getAttribute('src') !== newSrc) {
+                source.setAttribute('src', newSrc);
+                player.load();
+            }
+        }
+
+        checkTimeAndPlay();
+        // Раз в минуту проверяем время для автоматического переключения
+        setInterval(checkTimeAndPlay, 60000);
+    </script>
 
 </body>
 </html>
