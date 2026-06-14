@@ -2,7 +2,6 @@ name: Hourly Radio Recorder
 
 on:
   schedule:
-    # Запуск 5 раз в день по МСК: в 08:00, 11:00, 14:00, 17:00, 20:00
     - cron: '0 5 * * *'
     - cron: '0 8 * * *'
     - cron: '0 11 * * *'
@@ -15,18 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    # 1. Скачиваем текущие файлы сайта, чтобы добавить к ним новую запись
-    - name: Checkout repo
-      uses: actions/checkout@v4
-
-    # 2. Устанавливаем утилиту записи
     - name: Install Tools
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg
+        sudo apt-get install -y ffmpeg python3-requests
 
-    # 3. Записываем 1 час эфира (Радио Ваня для стабильности)
-    - name: Record Audio
+    - name: Record and Upload Audio
+      env:
+        WEBAPP_URL: ${{ secrets.GOOGLE_WEBAPP_URL }}
       run: |
         export TZ="Europe/Moscow"
         CURRENT_HOUR=$(date +%H)
@@ -37,16 +32,42 @@ jobs:
         elif [ "$CURRENT_HOUR" -eq "17" ] || [ "$CURRENT_HOUR" -eq "18" ]; then PROG_NUM=4;
         else PROG_NUM=5; fi
         
-        # Записываем ровно 1 час (3600 секунд) аудио
+        FILE_NAME="program_${PROG_NUM}.mp3"
+        
+        echo "Запуск записи 1 часа радио (Радио Ваня) для программы №${PROG_NUM}..."
+        
+        # Записываем ровно 1 час (3600 секунд) музыки
         ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
                -i "https://radiokrug.ru" \
-               -t 3600 -acodec libmp3lame -b:a 128k "program_${PROG_NUM}.mp3" -y || true
-
-    # 4. Автоматически сохраняем готовый файл прямо в репозиторий GitHub
-    - name: Save File to GitHub
-      run: |
-        git config --global user.name "Radio-Bot"
-        git config --global user.email "bot@github.com"
-        git add *.mp3
-        git commit -m "Авто-обновление записи эфира" || exit 0
-        git push
+               -t 3600 -acodec libmp3lame -b:a 128k "$FILE_NAME" -y || true
+        
+        echo "Запись завершена. Нарезаем файл и отправляем в Google Диск..."
+        
+        # Нарезаем файл по 4 Мегабайта и отправляем порциями в Google Apps Script
+        python3 -c "
+        import os, base64, requests, math
+        file_path = '$FILE_NAME'
+        if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+            with open(file_path, 'rb') as f:
+                file_data = f.read()
+            
+            chunk_size = 4 * 1024 * 1024 # 4MB
+            total_chunks = math.ceil(len(file_data) / chunk_size)
+            
+            for i in range(total_chunks):
+                start = i * chunk_size
+                end = start + chunk_size
+                chunk_data = file_data[start:end]
+                encoded = base64.b64encode(chunk_data).decode('utf-8')
+                
+                payload = {
+                    'fileName': file_path,
+                    'fileBytes': encoded,
+                    'chunkIndex': i,
+                    'totalChunks': total_chunks
+                }
+                res = requests.post(os.environ['WEBAPP_URL'], json=payload)
+                print(f'Кусок {i+1}/{total_chunks}: {res.text}')
+        else:
+            print('Ошибка: Файл пуст.')
+        "
