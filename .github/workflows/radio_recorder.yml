@@ -4,7 +4,7 @@ on:
   schedule:
     # 11:00 UTC (14:00 МСК) и 13:00 UTC (16:00 МСК)
     - cron: '0 11,13 * * *'
-  workflow_dispatch:
+  workflow_dispatch: # Кнопка ручного запуска
 
 jobs:
   record_stream:
@@ -18,17 +18,23 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg
 
-    - name: Record Selected Intervals
+    - name: Record Radio Stream
       run: |
-        CURRENT_HOUR=$(date +%H)
-        
-        # Если сейчас 11:00 UTC (14:00 МСК), пишем 1 час (3600 сек)
-        if [ "$CURRENT_HOUR" -eq 11 ]; then
-          timeout 3600 ffmpeg -i "https://5-tv.ru" -c copy record.mp3 || true
-        
-        # Если сейчас 13:00 UTC (16:00 МСК), пишем 5 часов подряд до 21:00 МСК (18000 сек)
-        elif [ "$CURRENT_HOUR" -eq 13 ]; then
-          timeout 18000 ffmpeg -i "https://5-tv.ru" -c copy record.mp3 || true
+        # Определяем, как был запущен скрипт
+        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          echo "Ручной запуск: пишем тест на 15 секунд"
+          ffmpeg -i "https://5-tv.ru" -t 15 -c copy record.mp3
+        else
+          CURRENT_HOUR=$(date +%H)
+          echo "Запуск по расписанию. Час UTC: $CURRENT_HOUR"
+          
+          if [ "$CURRENT_HOUR" -eq 11 ]; then
+            # 14:00 МСК — пишем 1 час (3600 сек)
+            ffmpeg -i "https://5-tv.ru" -t 3600 -c copy record.mp3
+          elif [ "$CURRENT_HOUR" -eq 13 ]; then
+            # 16:00 МСК — пишем 5 часов (18000 сек)
+            ffmpeg -i "https://5-tv.ru" -t 18000 -c copy record.mp3
+          fi
         fi
 
     - name: Save and Upload to Site
