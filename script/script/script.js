@@ -1,5 +1,5 @@
 ru"; 
-const ARCHIVE_FILE_URL = "https://google.com"; 
+const ARCHIVE_FILE_URL = "https://google.com";
 
 const audio = document.getElementById('audioTrack');
 const playBtn = document.getElementById('playBtn');
