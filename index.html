@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — Ночной Ночной Автомат</title>
+    <title>Радио Петербург — Интерактивный Плеер</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,8 +19,8 @@
             text-align: center;
             background: #1e293b;
             padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             width: 350px;
         }
         h1 {
@@ -32,18 +32,42 @@
         }
         .status-badge {
             display: inline-block;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 20px;
             font-size: 11px;
             font-weight: bold;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             text-transform: uppercase;
         }
         .archive { background-color: #10b981; color: white; }
-        .off { background-color: #64748b; color: white; }
-        audio {
+        .live { background-color: #ef4444; color: white; }
+        
+        /* Стили для красивой большой кнопки */
+        .play-btn {
+            background: linear-gradient(135deg, #38bdf8, #0284c7);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             width: 100%;
-            margin-top: 10px;
+        }
+        .play-btn:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
+        }
+        .play-btn:active {
+            transform: scale(0.98);
+        }
+        /* Скрываем стандартный некрасивый плеер */
+        audio {
+            display: none;
         }
     </style>
 </head>
@@ -51,20 +75,24 @@
 
     <div class="radio-container">
         <h1>Радио Петербург</h1>
-        <div id="status" class="status-badge">Проверка времени...</div>
+        <div id="status" class="status-badge">Определение времени...</div>
         
-        <audio id="radioPlayer" controls autoplay>
+        <!-- Скрытый аудио-плеер -->
+        <audio id="radioPlayer">
             <source id="audioSource" src="" type="audio/mpeg">
-            Ваш браузер не поддерживает элемент audio.
         </audio>
+
+        <!-- Большая кнопка управления -->
+        <button id="playButton" class="play-btn" onclick="togglePlay()">▶ Включить радио</button>
     </div>
 
     <script>
-        function checkTimeAndPlay() {
-            const player = document.getElementById('radioPlayer');
-            const source = document.getElementById('audioSource');
-            const statusBadge = document.getElementById('status');
-            
+        const player = document.getElementById('radioPlayer');
+        const source = document.getElementById('audioSource');
+        const statusBadge = document.getElementById('status');
+        const playButton = document.getElementById('playButton');
+
+        function checkTime() {
             const currentHour = new Date().getHours(); 
             let newSrc = "";
 
@@ -74,25 +102,39 @@
                 statusBadge.textContent = "💾 АРХИВ ЭФИРА (00:00 - 08:00)";
                 statusBadge.className = "status-badge archive";
             } 
-            // В любое другое время дня радио полностью выключено
+            // В дневное время включаем Прямой эфир радиостанции
             else {
-                newSrc = "";
-                statusBadge.textContent = "⚪ ЭФИР ВЫКЛЮЧЕН";
-                statusBadge.className = "status-badge off";
+                newSrc = "https://5-tv.ru";
+                statusBadge.textContent = "🔴 ПРЯМОЙ ЭФИР ПРЯМО СЕЙЧАС";
+                statusBadge.className = "status-badge live";
             }
 
             if (source.getAttribute('src') !== newSrc) {
                 source.setAttribute('src', newSrc);
                 player.load();
-                if (newSrc === "") {
-                    player.pause();
-                }
             }
         }
 
-        checkTimeAndPlay();
-        // Проверяем время каждую минуту для автоматического включения/выключения
-        setInterval(checkTimeAndPlay, 60000);
+        // Функция запуска и остановки звука по кнопке
+        function togglePlay() {
+            if (player.paused) {
+                checkTime(); // Перед запуском проверяем время, чтобы включить нужный поток
+                player.play();
+                playButton.textContent = "⏸ Остановить звук";
+                playButton.style.background = "linear-gradient(135deg, #ef4444, #b91c1c)";
+                playButton.style.boxShadow = "0 4px 15px rgba(239, 68, 68, 0.4)";
+            } else {
+                player.pause();
+                playButton.textContent = "▶ Включить радио";
+                playButton.style.background = "linear-gradient(135deg, #38bdf8, #0284c7)";
+                playButton.style.boxShadow = "0 4px 15px rgba(56, 189, 248, 0.4)";
+            }
+        }
+
+        // Первичная проверка времени для отображения статуса
+        checkTime();
+        // Проверяем время каждую минуту
+        setInterval(checkTime, 60000);
     </script>
 
 </body>
