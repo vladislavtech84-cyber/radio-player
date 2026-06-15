@@ -36,7 +36,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        /* Кнопка «Включить», которая работает внутри страницы */
+        /* Удобная большая кнопка играть/пауза */
         .play-btn {
             background-color: #00ff87;
             color: #121212;
@@ -73,6 +73,7 @@
             width: 100%;
             box-sizing: border-box;
             transition: all 0.2s;
+            margin-top: 10px;
         }
         .archive-btn:hover {
             border-color: #00ff87;
@@ -88,23 +89,28 @@
     
     <!-- Кнопка управления -->
     <button class="play-btn" id="play-trigger" onclick="toggleRadio()">ВКЛЮЧИТЬ РАДИО</button>
-    
-    <!-- ПРЯМАЯ MP3-ССЫЛКА НА РАДИО ВНУТРИ СТРАНИЦЫ -->
-    <audio id="radio-player" src="https://5-tv.ru" preload="none"></audio>
 
-    <!-- Ссылка на ваш архив на GitHub -->
+    <!-- Кнопка архива GitHub -->
     <a href="https://github.com" target="_blank" class="archive-btn">📁 Открыть архив записей</a>
 </div>
 
 <script>
-    const audio = document.getElementById('radio-player');
+    // Создаем аудио-объект напрямую в оперативной памяти (Chrome не сможет его заблокировать)
+    const audio = new Audio();
+    audio.crossOrigin = "anonymous";
+    
+    // Прямой официальный медиа-поток Радио Петербург
+    const streamUrl = "https://5-tv.ru";
+
     const button = document.getElementById('play-trigger');
     const statusText = document.getElementById('status-text');
 
     function toggleRadio() {
-        if (audio.paused) {
-            // Принудительно перезаписываем прямую ссылку перед стартом для сброса зависшего буфера
-            audio.src = 'https://5-tv.ru';
+        if (audio.paused || audio.src === "") {
+            // Подгружаем чистый поток без зависшего буфера
+            audio.src = streamUrl;
+            audio.load();
+            
             audio.play()
                 .then(() => {
                     button.textContent = 'ВЫКЛЮЧИТЬ';
@@ -112,12 +118,15 @@
                     statusText.textContent = '🔊 В ЭФИРЕ...';
                 })
                 .catch(error => {
-                    alert('Браузер заблокировал автозапуск. Нажмите кнопку еще раз.');
+                    alert('Сеть перегружена. Нажмите кнопку ещё раз через секунду.');
                     console.error(error);
                 });
         } else {
             audio.pause();
-            audio.src = ''; // Очищаем поток, чтобы остановить загрузку в фоне
+            // Полностью сбрасываем адрес, чтобы остановить скрытую загрузку мегабайтов в фоне
+            audio.removeAttribute('src');
+            audio.load();
+            
             button.textContent = 'ВКЛЮЧИТЬ РАДИО';
             button.classList.remove('playing');
             statusText.textContent = '🔴 ПРЯМОЙ ЭФИР';
