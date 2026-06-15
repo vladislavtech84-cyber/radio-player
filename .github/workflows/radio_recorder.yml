@@ -1,1 +1,31 @@
+yamlname: Record Radio Petersburg
 
+on:
+  schedule:
+    # Автоматический запуск каждый день в 13:00 UTC (это ровно 16:00 по Москве)
+    - cron: '0 13 * * *'
+  workflow_dispatch: # Добавляет кнопку для ручного запуска в любое время
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install FFmpeg
+      run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+    - name: Record 1 hour stream
+      run: |
+        # Запись потока ровно 1 час (3600 секунд) в один MP3 файл с текущей датой
+        FILENAME="Radio_Peterburg_$(date +'%d-%m-%Y').mp3"
+        ffmpeg -i "https://5-tv.ru" -t 3600 -acodec copy "$FILENAME"
+
+    - name: Save MP3 to Repository
+      run: |
+        git config --global user.name "RadioBot"
+        git config --global user.email "bot@github.com"
+        git add *.mp3
+        git commit -m "Добавлена запись за $(date +'%d-%m-%Y')" || exit 0
+        git push
