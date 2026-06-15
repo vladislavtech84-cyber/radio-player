@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург</title>
+    <title>Радио Петербург — Плеер</title>
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -17,69 +17,122 @@
         }
         .player-container {
             background-color: #1e1e1e;
-            padding: 40px 30px;
+            padding: 35px 30px;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             text-align: center;
             width: 320px;
         }
         h2 {
-            font-size: 24px;
+            font-size: 22px;
             margin-bottom: 5px;
             color: #00ff87;
             margin-top: 0;
         }
         .status {
-            font-size: 14px;
+            font-size: 13px;
             color: #888888;
-            margin-bottom: 35px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        /* Кнопка запуска официального вещания 5-tv.ru */
-        .btn-link {
-            display: inline-block;
+        .play-btn {
             background-color: #00ff87;
             color: #121212;
-            text-decoration: none;
+            border: none;
             padding: 16px 40px;
             font-size: 18px;
             font-weight: bold;
             border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
             width: 100%;
-            box-sizing: border-box;
+            outline: none;
             box-shadow: 0 4px 15px rgba(0, 255, 135, 0.3);
-            transition: transform 0.2s;
+            margin-bottom: 20px;
         }
-        .btn-link:hover {
+        .play-btn:hover {
             transform: scale(1.02);
             background-color: #00e175;
         }
+        .playing {
+            background-color: #ff3b30;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+        }
         .archive-btn {
+            display: inline-block;
             background-color: #2b2b2b;
             color: #ffffff;
+            text-decoration: none;
             border: 1px solid #444;
-            margin-top: 20px;
             font-size: 14px;
             padding: 12px 20px;
             border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            margin-top: 10px;
         }
         .archive-btn:hover {
             border-color: #00ff87;
             background-color: #3d3d3d;
         }
     </style>
+    <!-- Подключаем безопасную библиотеку для проигрывания потока -->
+    <script src="https://jsdelivr.net"></script>
 </head>
 <body>
 
 <div class="player-container">
     <h2>Радио Петербург</h2>
-    <div class="status">🔴 ПРЯМОЙ ЭФИР • 5-TV</div>
+    <div class="status" id="status-text">🔴 ПРЯМОЙ ЭФИР</div>
     
-    <!-- Официальный поток Пятого канала откроется сразу в медиа-плеере браузера -->
-    <a href="https://radio.5-tv.ru/radio.mp3" target="_blank" class="btn-link">▶ ВКЛЮЧИТЬ РАДИО</a>
+    <!-- Кнопка играет прямо внутри страницы -->
+    <button class="play-btn" id="play-trigger" onclick="toggleRadio()">ВКЛЮЧИТЬ РАДИО</button>
+    
+    <audio id="radio-player" crossorigin="anonymous"></audio>
 
     <!-- Ссылка на ваш архив на GitHub -->
-    <a href="https://github.com" target="_blank" class="btn-link archive-btn">📁 Открыть архив записей</a>
+    <a href="https://github.com" target="_blank" class="archive-btn">📁 Открыть архив записей</a>
 </div>
+
+<script>
+    const audio = document.getElementById('radio-player');
+    const button = document.getElementById('play-trigger');
+    const statusText = document.getElementById('status-text');
+    
+    // Безопасный HLS поток Радио Петербург (из официального ТВ-вещания Пятого Канала)
+    const streamUrl = "https://cdnvideo.ru";
+
+    if (Hls.isSupported()) {
+        const hls = new Hls();
+        hls.loadSource(streamUrl);
+        hls.attachMedia(audio);
+    } else if (audio.canPlayType('application/vnd.apple.mpegurl')) {
+        audio.src = streamUrl;
+    }
+
+    function toggleRadio() {
+        if (audio.paused) {
+            audio.play()
+                .then(() => {
+                    button.textContent = 'ВЫКЛЮЧИТЬ';
+                    button.classList.add('playing');
+                    statusText.textContent = '🔊 В ЭФИРЕ...';
+                })
+                .catch(error => {
+                    alert('Не удалось запустить. Попробуйте еще раз.');
+                    console.error(error);
+                });
+        } else {
+            audio.pause();
+            button.textContent = 'ВКЛЮЧИТЬ РАДИО';
+            button.classList.remove('playing');
+            statusText.textContent = '🔴 ПРЯМОЙ ЭФИР';
+        }
+    }
+</script>
 
 </body>
 </html>
