@@ -17,11 +17,11 @@ html<!DOCTYPE html>
         }
         .player-container {
             background-color: #1e1e1e;
-            padding: 30px;
+            padding: 20px;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             text-align: center;
-            width: 320px;
+            width: 340px;
         }
         h2 {
             font-size: 20px;
@@ -31,34 +31,7 @@ html<!DOCTYPE html>
         .status {
             font-size: 14px;
             color: #888888;
-            margin-bottom: 25px;
-        }
-        .play-btn {
-            background-color: #00ff87;
-            color: #121212;
-            border: none;
-            padding: 15px 40px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            outline: none;
-        }
-        .play-btn:hover {
-            transform: scale(1.03);
-            background-color: #00e175;
-        }
-        .play-btn:active {
-            transform: scale(0.98);
-        }
-        .playing {
-            background-color: #ff3b30;
-            color: #ffffff;
-        }
-        .playing:hover {
-            background-color: #e03026;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -66,44 +39,14 @@ html<!DOCTYPE html>
 
 <div class="player-container">
     <h2>Радио Петербург</h2>
-    <div class="status" id="status-text">LIVE • Прямой эфир</div>
+    <div class="status">LIVE • Прямой эфир</div>
     
-    <button class="play-btn" id="play-trigger" onclick="toggleRadio()">ИГРАТЬ</button>
-    
-    <!-- ИСПРАВЛЕНО: добавлена буква 's' в https -->
-    <audio id="radio-player" src="https://radio.5-tv.ru/radio.mp3" preload="none" crossorigin="anonymous"></audio>
+    <!-- Официальный безопасный веб-плеер для сайта -->
+    <div class="RP-SCRIPT">
+        <a class="RP-LINK" href="https://radiopotok.ru/radio/1427">Радио «Петербург»</a>
+    </div>
+    <script defer src="https://radiopotok.ru/f/script6.1/1427.js" charset="UTF-8"></script>
 </div>
-
-<script>
-    const audio = document.getElementById('radio-player');
-    const button = document.getElementById('play-trigger');
-    const statusText = document.getElementById('status-text');
-
-    function toggleRadio() {
-        if (audio.paused) {
-            audio.play()
-                .then(() => {
-                    button.textContent = 'ПАУЗА';
-                    button.classList.add('playing');
-                    statusText.textContent = 'Воспроизведение...';
-                })
-                .catch(error => {
-                    alert('Ошибка блокировки потока браузером. Перезапустите страницу.');
-                    console.error(error);
-                });
-        } else {
-            audio.pause();
-            // Сброс ссылки с защищенным протоколом https
-            audio.src = ''; 
-            audio.src = 'https://radio.5-tv.ru/radio.mp3';
-            
-            button.textContent = 'ИГРАТЬ';
-            button.classList.remove('playing');
-            statusText.textContent = 'LIVE • Прямой эфир';
-        }
-    }
-</script>
 
 </body>
 </html>
-Используйте код с осторожностью.
