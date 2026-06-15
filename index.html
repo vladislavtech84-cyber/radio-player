@@ -105,19 +105,18 @@
     <h2>Радио Петербург</h2>
     <div class="status" id="status-text">🔴 ПРЯМОЙ ЭФИР</div>
     
-    <!-- Большая кнопка играть/пауза -->
     <button class="play-btn" id="play-trigger" onclick="toggleRadio()">ВКЛЮЧИТЬ</button>
     
-    <!-- Рабочий аудиопоток радиостанции -->
     <audio id="radio-player" src="https://hostingradio.ru" preload="none" crossorigin="anonymous"></audio>
     
-    <!-- АРХИВ -->
+    <!-- АРХИВ НА GITHUB -->
     <div class="archive-container">
         <div class="archive-title">ЗАПИСЬ ЭФИРА</div>
-        <a href="https://google.com" 
+        <!-- ИСПРАВЛЕНО: Кнопка теперь ведет прямо в ваш архив на GitHub -->
+        <a href="https://github.com" 
            target="_blank" 
            class="drive-btn">
-           📁 Открыть архив на Диске
+           📁 Открыть архив записей
         </a>
     </div>
 </div>
@@ -129,21 +128,20 @@
 
     function toggleRadio() {
         if (audio.paused) {
-            // Перед запуском обновляем ссылку, чтобы не было задержки звука
             audio.src = 'https://hostingradio.ru';
             audio.play()
                 .then(() => {
                     button.textContent = 'ВЫКЛЮЧИТЬ';
                     button.classList.add('playing');
-                    statusText.textContent = '🔊 ВОСПРОИЗВЕДЕНИЕ...';
+                    text.textContent = '🔊 ВОСПРОИЗВЕДЕНИЕ...';
                 })
                 .catch(error => {
-                    alert('Ошибка запуска потока. Проверьте интернет или обновите страницу.');
+                    alert('Ошибка запуска потока. Обновите страницу.');
                     console.error(error);
                 });
         } else {
             audio.pause();
-            audio.src = ''; // Очищаем буфер
+            audio.src = ''; 
             button.textContent = 'ВКЛЮЧИТЬ';
             button.classList.remove('playing');
             statusText.textContent = '🔴 ПРЯМОЙ ЭФИР';
