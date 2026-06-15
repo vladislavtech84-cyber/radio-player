@@ -3,19 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург и Облачный Плеер</title>
+    <title>Радио Петербург</title>
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
             margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
         }
         .player-container {
             background-color: #1e1e1e;
@@ -35,85 +33,20 @@
             font-size: 14px;
             color: #888888;
             margin-bottom: 25px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        /* Новая большая кнопка, которая обойдет все блокировки */
-        .play-main-btn {
-            background-color: #00ff87;
-            color: #121212;
-            border: none;
-            padding: 16px 40px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            text-decoration: none;
-            display: inline-block;
-            box-sizing: border-box;
-            box-shadow: 0 4px 15px rgba(0, 255, 135, 0.4);
-            margin-bottom: 10px;
-        }
-        .play-main-btn:hover {
-            transform: scale(1.02);
-            background-color: #00e175;
-        }
-        .archive-container {
-            border-top: 1px solid #333;
-            padding-top: 25px;
-            margin-top: 25px;
-        }
-        .archive-title {
-            font-size: 16px;
-            color: #00ff87;
-            margin-bottom: 15px;
-            font-weight: bold;
-        }
-        .drive-btn {
-            background-color: #2b2b2b;
-            color: #ffffff;
-            border: 1px solid #444;
-            padding: 12px 20px;
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            text-decoration: none;
-            display: inline-block;
-            box-sizing: border-box;
-        }
-        .drive-btn:hover {
-            background-color: #3d3d3d;
-            border-color: #00ff87;
         }
     </style>
 </head>
 <body>
 
 <div class="player-container">
-    <!-- ЖИВОЙ ЭФИР -->
     <h2>Радио Петербург</h2>
-    <div class="status">🔴 ПРЯМОЙ ЭФИР</div>
+    <div class="status">LIVE • Прямой эфир</div>
     
-    <!-- Новое решение: Прямая безопасная ссылка вещания -->
-    <a href="https://hostingradio.ru" 
-       target="_blank" 
-       class="play-main-btn">
-       ▶ СЛУШАТЬ ЭФИР
-    </a>
-    
-    <!-- АРХИВ НА GITHUB -->
-    <div class="archive-container">
-        <div class="archive-title">ЗАПИСЬ ЭФИРА</div>
-        <a href="https://github.com" 
-           target="_blank" 
-           class="drive-btn">
-           📁 Открыть архив записей
-        </a>
+    <!-- ТОТ САМЫЙ РАБОЧИЙ ВИДЖЕТ ИЗ САМОГО НАЧАЛА -->
+    <div class="RP-SCRIPT">
+        <a class="RP-LINK" href="https://radiopotok.ru">Радио «Петербург»</a>
     </div>
+    <script defer src="https://radiopotok.ru" charset="UTF-8"></script>
 </div>
 
 </body>
