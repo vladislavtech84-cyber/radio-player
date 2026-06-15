@@ -15,8 +15,8 @@ jobs:
     - name: Record Stream
       run: |
         FILENAME="Radio_$(date +'%d-%m-%Y').mp3"
-        # Используем мощный wget с маскировкой под плеер, пишем ровно 1 час (3600 секунд)
-        wget -U "Mozilla/5.0" --timeout=3600 "https://5-tv.ru" -O "$FILENAME" || true
+        # Скачиваем поток через резервный рабочий сервер вещания в течение 10 секунд для теста
+        timeout 10s curl -L "https://hostingradio.ru" -o "$FILENAME" || true
 
     - name: Save to GitHub
       run: |
