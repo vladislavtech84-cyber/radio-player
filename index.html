@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — Пятый Канал</title>
+    <title>Радио Петербург</title>
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -17,47 +17,54 @@
         }
         .player-container {
             background-color: #1e1e1e;
-            padding: 35px 30px;
+            padding: 40px 30px;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             text-align: center;
             width: 320px;
         }
         h2 {
-            font-size: 22px;
+            font-size: 24px;
             margin-bottom: 5px;
             color: #00ff87;
             margin-top: 0;
         }
         .status {
-            font-size: 13px;
+            font-size: 14px;
             color: #888888;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            margin-bottom: 35px;
         }
-        .play-btn {
+        /* Кнопка запуска официального вещания 5-tv.ru */
+        .btn-link {
+            display: inline-block;
             background-color: #00ff87;
             color: #121212;
-            border: none;
+            text-decoration: none;
             padding: 16px 40px;
             font-size: 18px;
             font-weight: bold;
             border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s ease;
             width: 100%;
-            outline: none;
+            box-sizing: border-box;
             box-shadow: 0 4px 15px rgba(0, 255, 135, 0.3);
+            transition: transform 0.2s;
         }
-        .play-btn:hover {
+        .btn-link:hover {
             transform: scale(1.02);
             background-color: #00e175;
         }
-        .playing {
-            background-color: #ff3b30;
+        .archive-btn {
+            background-color: #2b2b2b;
             color: #ffffff;
-            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
+            border: 1px solid #444;
+            margin-top: 20px;
+            font-size: 14px;
+            padding: 12px 20px;
+            border-radius: 8px;
+        }
+        .archive-btn:hover {
+            border-color: #00ff87;
+            background-color: #3d3d3d;
         }
     </style>
 </head>
@@ -65,43 +72,14 @@
 
 <div class="player-container">
     <h2>Радио Петербург</h2>
-    <div class="status" id="status-text">ТРК Пятый Канал • LIVE</div>
+    <div class="status">🔴 ПРЯМОЙ ЭФИР • 5-TV</div>
     
-    <!-- Главная кнопка управления -->
-    <button class="play-btn" id="play-trigger" onclick="toggleRadio()">ВКЛЮЧИТЬ РАДИО</button>
-    
-    <!-- Официальный прямой аудиопоток с серверов 5-tv.ru -->
-    <audio id="radio-player" src="https://5-tv.ru" preload="none" crossorigin="anonymous"></audio>
+    <!-- Официальный поток Пятого канала откроется сразу в медиа-плеере браузера -->
+    <a href="https://radio.5-tv.ru/radio.mp3" target="_blank" class="btn-link">▶ ВКЛЮЧИТЬ РАДИО</a>
+
+    <!-- Ссылка на ваш архив на GitHub -->
+    <a href="https://github.com" target="_blank" class="btn-link archive-btn">📁 Открыть архив записей</a>
 </div>
-
-<script>
-    const audio = document.getElementById('radio-player');
-    const button = document.getElementById('play-trigger');
-    const statusText = document.getElementById('status-text');
-
-    function toggleRadio() {
-        if (audio.paused) {
-            // Перезапускаем поток с официального сайта, чтобы не было задержки
-            audio.src = 'https://5-tv.ru';
-            audio.play()
-                .then(() => {
-                    button.textContent = 'ВЫКЛЮЧИТЬ';
-                    button.classList.add('playing');
-                    statusText.textContent = '🔊 В ЭФИРЕ...';
-                })
-                .catch(error => {
-                    alert('Ошибка сети. Нажмите кнопку еще раз через пару секунд.');
-                    console.error(error);
-                });
-        } else {
-            audio.pause();
-            audio.src = ''; // Сброс буфера
-            button.textContent = 'ВКЛЮЧИТЬ РАДИО';
-            button.classList.remove('playing');
-            statusText.textContent = 'ТРК Пятый Канал • LIVE';
-        }
-    }
-</script>
 
 </body>
 </html>
