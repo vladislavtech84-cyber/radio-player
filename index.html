@@ -38,34 +38,11 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .play-btn {
-            background-color: #00ff87;
-            color: #121212;
-            border: none;
-            padding: 15px 40px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            outline: none;
-            box-shadow: 0 4px 12px rgba(0, 255, 135, 0.3);
-        }
-        .play-btn:hover {
-            transform: scale(1.02);
-            background-color: #00e175;
-        }
-        .play-btn:active {
-            transform: scale(0.98);
-        }
-        .playing {
-            background-color: #ff3b30;
-            color: #ffffff;
-            box-shadow: 0 4px 12px rgba(255, 59, 48, 0.3);
-        }
-        .playing:hover {
-            background-color: #e03026;
+        /* Стилизация официального рабочего виджета под наш дизайн */
+        .widget-wrapper {
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: center;
         }
         .archive-container {
             border-top: 1px solid #333;
@@ -103,16 +80,19 @@
 <div class="player-container">
     <!-- ЖИВОЙ ЭФИР -->
     <h2>Радио Петербург</h2>
-    <div class="status" id="status-text">🔴 ПРЯМОЙ ЭФИР</div>
+    <div class="status">🔴 ПРЯМОЙ ЭФИР</div>
     
-    <button class="play-btn" id="play-trigger" onclick="toggleRadio()">ВКЛЮЧИТЬ</button>
-    
-    <audio id="radio-player" src="https://hostingradio.ru" preload="none" crossorigin="anonymous"></audio>
+    <!-- Встроенный надежный виджет, который у вас работал -->
+    <div class="widget-wrapper">
+        <div class="RP-SCRIPT">
+            <a class="RP-LINK" href="https://radiopotok.ru">Радио «Петербург»</a>
+        </div>
+        <script defer src="https://radiopotok.ru" charset="UTF-8"></script>
+    </div>
     
     <!-- АРХИВ НА GITHUB -->
     <div class="archive-container">
         <div class="archive-title">ЗАПИСЬ ЭФИРА</div>
-        <!-- ИСПРАВЛЕНО: Кнопка теперь ведет прямо в ваш архив на GitHub -->
         <a href="https://github.com" 
            target="_blank" 
            class="drive-btn">
@@ -120,34 +100,6 @@
         </a>
     </div>
 </div>
-
-<script>
-    const audio = document.getElementById('radio-player');
-    const button = document.getElementById('play-trigger');
-    const statusText = document.getElementById('status-text');
-
-    function toggleRadio() {
-        if (audio.paused) {
-            audio.src = 'https://hostingradio.ru';
-            audio.play()
-                .then(() => {
-                    button.textContent = 'ВЫКЛЮЧИТЬ';
-                    button.classList.add('playing');
-                    text.textContent = '🔊 ВОСПРОИЗВЕДЕНИЕ...';
-                })
-                .catch(error => {
-                    alert('Ошибка запуска потока. Обновите страницу.');
-                    console.error(error);
-                });
-        } else {
-            audio.pause();
-            audio.src = ''; 
-            button.textContent = 'ВКЛЮЧИТЬ';
-            button.classList.remove('playing');
-            statusText.textContent = '🔴 ПРЯМОЙ ЭФИР';
-        }
-    }
-</script>
 
 </body>
 </html>
