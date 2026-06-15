@@ -38,11 +38,10 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        /* Стилизация официального рабочего виджета под наш дизайн */
-        .widget-wrapper {
+        /* Стиль для стандартного браузерного плеера */
+        audio {
+            width: 100%;
             margin-bottom: 10px;
-            display: flex;
-            justify-content: center;
         }
         .archive-container {
             border-top: 1px solid #333;
@@ -82,13 +81,8 @@
     <h2>Радио Петербург</h2>
     <div class="status">🔴 ПРЯМОЙ ЭФИР</div>
     
-    <!-- Встроенный надежный виджет, который у вас работал -->
-    <div class="widget-wrapper">
-        <div class="RP-SCRIPT">
-            <a class="RP-LINK" href="https://radiopotok.ru">Радио «Петербург»</a>
-        </div>
-        <script defer src="https://radiopotok.ru" charset="UTF-8"></script>
-    </div>
+    <!-- Стандартный надежный плеер браузера с кнопками -->
+    <audio controls src="https://hostingradio.ru" type="audio/mpeg" crossorigin="anonymous"></audio>
     
     <!-- АРХИВ НА GITHUB -->
     <div class="archive-container">
