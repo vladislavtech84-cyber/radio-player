@@ -1,4 +1,4 @@
-yamlname: Record Radio Petersburg
+name: RadioRecord
 
 on:
   schedule:
@@ -6,24 +6,22 @@ on:
   workflow_dispatch:
 
 jobs:
-  record:
+  build:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout repository
+    - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Install FFmpeg
-      run: sudo apt-get update && sudo apt-get install -y ffmpeg
-
-    - name: Record 1 hour stream
+    - name: Record
       run: |
-        FILENAME="Radio_Peterburg_$(date +'%d-%m-%Y').mp3"
+        sudo apt-get update && sudo apt-get install -y ffmpeg
+        FILENAME="Radio_$(date +'%d-%m-%Y').mp3"
         ffmpeg -i "https://5-tv.ru" -t 3600 -acodec copy "$FILENAME"
 
-    - name: Save MP3 to Repository
+    - name: Save
       run: |
         git config --global user.name "RadioBot"
         git config --global user.email "bot@github.com"
         git add *.mp3
-        git commit -m "Add radio archive" || exit 0
+        git commit -m "Save radio" || exit 0
         git push
