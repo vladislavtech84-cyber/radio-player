@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург</title>
+    <title>Радио Петербург — Пятый Канал</title>
     <style>
         body {
             background-color: #121212;
             color: #ffffff;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -17,7 +17,7 @@
         }
         .player-container {
             background-color: #1e1e1e;
-            padding: 30px;
+            padding: 35px 30px;
             border-radius: 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
             text-align: center;
@@ -30,9 +30,34 @@
             margin-top: 0;
         }
         .status {
-            font-size: 14px;
+            font-size: 13px;
             color: #888888;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .play-btn {
+            background-color: #00ff87;
+            color: #121212;
+            border: none;
+            padding: 16px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            outline: none;
+            box-shadow: 0 4px 15px rgba(0, 255, 135, 0.3);
+        }
+        .play-btn:hover {
+            transform: scale(1.02);
+            background-color: #00e175;
+        }
+        .playing {
+            background-color: #ff3b30;
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(255, 59, 48, 0.3);
         }
     </style>
 </head>
@@ -40,14 +65,43 @@
 
 <div class="player-container">
     <h2>Радио Петербург</h2>
-    <div class="status">LIVE • Прямой эфир</div>
+    <div class="status" id="status-text">ТРК Пятый Канал • LIVE</div>
     
-    <!-- ТОТ САМЫЙ РАБОЧИЙ ВИДЖЕТ ИЗ САМОГО НАЧАЛА -->
-    <div class="RP-SCRIPT">
-        <a class="RP-LINK" href="https://radiopotok.ru">Радио «Петербург»</a>
-    </div>
-    <script defer src="https://radiopotok.ru" charset="UTF-8"></script>
+    <!-- Главная кнопка управления -->
+    <button class="play-btn" id="play-trigger" onclick="toggleRadio()">ВКЛЮЧИТЬ РАДИО</button>
+    
+    <!-- Официальный прямой аудиопоток с серверов 5-tv.ru -->
+    <audio id="radio-player" src="https://5-tv.ru" preload="none" crossorigin="anonymous"></audio>
 </div>
+
+<script>
+    const audio = document.getElementById('radio-player');
+    const button = document.getElementById('play-trigger');
+    const statusText = document.getElementById('status-text');
+
+    function toggleRadio() {
+        if (audio.paused) {
+            // Перезапускаем поток с официального сайта, чтобы не было задержки
+            audio.src = 'https://5-tv.ru';
+            audio.play()
+                .then(() => {
+                    button.textContent = 'ВЫКЛЮЧИТЬ';
+                    button.classList.add('playing');
+                    statusText.textContent = '🔊 В ЭФИРЕ...';
+                })
+                .catch(error => {
+                    alert('Ошибка сети. Нажмите кнопку еще раз через пару секунд.');
+                    console.error(error);
+                });
+        } else {
+            audio.pause();
+            audio.src = ''; // Сброс буфера
+            button.textContent = 'ВКЛЮЧИТЬ РАДИО';
+            button.classList.remove('playing');
+            statusText.textContent = 'ТРК Пятый Канал • LIVE';
+        }
+    }
+</script>
 
 </body>
 </html>
