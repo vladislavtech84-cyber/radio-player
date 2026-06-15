@@ -2,9 +2,8 @@ name: RadioRecord
 
 on:
   schedule:
-    # Автоматический запуск каждый день в 13:00 UTC (это ровно 16:00 по Москве)
     - cron: '0 13 * * *'
-  workflow_dispatch: # Кнопка для ручного запуска в любое время
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,16 +12,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Install Tools
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg curl
-
     - name: Record Stream
       run: |
         FILENAME="Radio_$(date +'%d-%m-%Y').mp3"
-        # Скачиваем поток с маскировкой под реальный плеер (User-Agent), пишем 1 час (3600 секунд)
-        curl -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" -s "https://hostingradio.ru" --max-time 3600 -o "$FILENAME" || true
+        # Используем мощный wget с маскировкой под плеер, пишем ровно 1 час (3600 секунд)
+        wget -U "Mozilla/5.0" --timeout=3600 "https://5-tv.ru" -O "$FILENAME" || true
 
     - name: Save to GitHub
       run: |
