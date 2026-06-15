@@ -1,1 +1,109 @@
+html<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Радио Петербург Плеер</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .player-container {
+            background-color: #1e1e1e;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+            text-align: center;
+            width: 320px;
+        }
+        h2 {
+            font-size: 20px;
+            margin-bottom: 5px;
+            color: #00ff87;
+        }
+        .status {
+            font-size: 14px;
+            color: #888888;
+            margin-bottom: 25px;
+        }
+        .play-btn {
+            background-color: #00ff87;
+            color: #121212;
+            border: none;
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            outline: none;
+        }
+        .play-btn:hover {
+            transform: scale(1.03);
+            background-color: #00e175;
+        }
+        .play-btn:active {
+            transform: scale(0.98);
+        }
+        .playing {
+            background-color: #ff3b30;
+            color: #ffffff;
+        }
+        .playing:hover {
+            background-color: #e03026;
+        }
+    </style>
+</head>
+<body>
 
+<div class="player-container">
+    <h2>Радио Петербург</h2>
+    <div class="status" id="status-text">LIVE • Прямой эфир</div>
+    
+    <!-- Кнопка управления -->
+    <button class="play-btn" id="play-trigger" onclick="toggleRadio()">ИГРАТЬ</button>
+    
+    <!-- Невидимый тег аудио с официальным потоком -->
+    <audio id="radio-player" src="http://5-tv.ru" preload="none"></audio>
+</div>
+
+<script>
+    const audio = document.getElementById('radio-player');
+    const button = document.getElementById('play-trigger');
+    const statusText = document.getElementById('status-text');
+
+    function toggleRadio() {
+        if (audio.paused) {
+            audio.play()
+                .then(() => {
+                    button.textContent = 'ПАУЗА';
+                    button.classList.add('playing');
+                    statusText.textContent = 'Воспроизведение...';
+                })
+                .catch(error => {
+                    alert('Не удалось запустить поток. Проверьте интернет.');
+                    console.error(error);
+                });
+        } else {
+            audio.pause();
+            // Сбрасываем буфер, чтобы при следующем включении шло живое радио, а не старый кусок
+            audio.src = ''; 
+            audio.src = 'http://5-tv.ru';
+            
+            button.textContent = 'ИГРАТЬ';
+            button.classList.remove('playing');
+            statusText.textContent = 'LIVE • Прямой эфир';
+        }
+    }
+</script>
+
+</body>
+</html>
