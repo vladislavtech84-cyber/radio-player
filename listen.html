@@ -25,7 +25,6 @@
         <input type="text" id="host-id" placeholder="Вставьте ID вещателя">
         <button id="connect-btn">Подключиться к эфиру</button>
 
-        <!-- Сюда потечет звук с первой страницы -->
         <audio id="remote-audio" controls autoplay></audio>
     </div>
 
@@ -34,7 +33,13 @@
         const hostIdInput = document.getElementById('host-id');
         const remoteAudio = document.getElementById('remote-audio');
 
-        const peer = new Peer();
+        // Настройки сервера должны совпадать на обеих страницах
+        const peer = new Peer({
+            host: '://peerjs.com',
+            port: 443,
+            path: '/',
+            secure: true
+        });
 
         connectBtn.addEventListener('click', () => {
             const hostId = hostIdInput.value.trim();
@@ -43,14 +48,12 @@
                 return;
             }
 
-            // Создаем пустой медиапоток для инициализации вызова
             const fakeStream = new MediaStream();
             const call = peer.call(hostId, fakeStream);
 
-            // Получаем аудиопоток от вещателя
             call.on('stream', (remoteStream) => {
                 remoteAudio.srcObject = remoteStream;
-                remoteAudio.style.display = 'block'; // Показываем плеер слушателю
+                remoteAudio.style.display = 'block'; 
                 connectBtn.textContent = 'Вы в эфире!';
                 connectBtn.style.background = '#38bdf8';
             });
