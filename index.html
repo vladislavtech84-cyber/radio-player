@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Плеер — С записью</title>
+    <title>Радио Петербург — Финал</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,12 +73,12 @@
 <body>
 
     <div class="radio-container">
-        <h1>Радио Плеер</h1>
+        <h1>Радио Петербург</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Полностью открытый HTTPS-поток Дорожного Радио СПБ со всеми разрешениями для записи -->
-        <audio id="radio" controls autoplay crossorigin="anonymous">
-            <source src="https://hostingradio.ru" type="audio/mpeg">
+        <!-- Чистый, стабильный HTTPS поток Радио Петербург. БЕЗ crossorigin. Плеер ОЖИВЕТ -->
+        <audio id="radio" controls autoplay>
+            <source src="https://cdnvideo.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
@@ -88,7 +88,6 @@
     </div>
 
     <script>
-        const audio = document.getElementById('radio');
         const recordBtn = document.getElementById('record-btn');
         const btnText = document.getElementById('text');
         const btnDot = document.getElementById('dot');
@@ -96,25 +95,32 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
-        let audioContext;
-        let source;
-        let streamDest;
+        let recordStream;
 
-        recordBtn.addEventListener('click', () => {
+        recordBtn.addEventListener('click', async () => {
             if (!isRecording) {
                 try {
                     audioChunks = [];
                     
-                    // Запуск цифрового контекста для захвата звука из плеера
-                    if (!audioContext) {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        source = audioContext.createMediaElementSource(audio);
-                        streamDest = audioContext.createMediaStreamDestination();
-                        source.connect(streamDest);
-                        source.connect(audioContext.destination);
+                    // Самый мощный метод: захватываем чистый звук прямо из вкладки браузера
+                    // При нажатии Chrome предложит выбрать эту вкладку для записи
+                    recordStream = await navigator.mediaDevices.getDisplayMedia({ 
+                        video: { displaySurface: "browser" }, // Требуется для вызова окна Chrome
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        } 
+                    });
+                    
+                    // Вытаскиваем только звуковую дорожку из вкладки
+                    const audioTrack = recordStream.getAudioTracks()[0];
+                    if (!audioTrack) {
+                        throw new Error("Вы не поставили галочку 'Предоставить доступ к аудио'!");
                     }
-
-                    mediaRecorder = new MediaRecorder(streamDest.stream);
+                    
+                    const pureAudioStream = new MediaStream([audioTrack]);
+                    mediaRecorder = new MediaRecorder(pureAudioStream);
                     
                     mediaRecorder.ondataavailable = event => {
                         if (event.data.size > 0) audioChunks.push(event.data);
@@ -125,10 +131,13 @@
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const link = document.createElement('a');
                         link.href = audioUrl;
-                        link.download = 'radio_record.mp3';
+                        link.download = 'radio_petersburg_live.mp3';
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
+
+                        // Закрываем системный захват
+                        recordStream.getTracks().forEach(track => track.stop());
                     };
 
                     mediaRecorder.start();
@@ -138,7 +147,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Запустите радио перед началом записи!');
+                    alert(err.message || 'Для записи выберите текущую вкладку и включите галочку Аудио!');
                 }
             } else {
                 mediaRecorder.stop();
