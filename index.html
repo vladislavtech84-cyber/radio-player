@@ -3,7 +3,7 @@ html<!DOCTYPE html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Плеер — С записью</title>
+    <title>Радио Петербург — Автоматическое</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,122 +33,25 @@ html<!DOCTYPE html>
         .subtitle {
             font-size: 13px;
             color: #94a3b8;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
         }
         audio {
             width: 100%;
-            margin-bottom: 20px;
-        }
-        .record-btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: #ef4444;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-        .record-btn:hover {
-            background-color: #dc2626;
-            transform: scale(1.02);
-        }
-        .record-btn.recording {
-            background-color: #10b981;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
     <div class="radio-container">
-        <h1>Радио Плеер</h1>
+        <h1>Радио Петербург</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Ссылка на поток со всеми разрешениями CORS для стабильной цифровой записи -->
-        <audio id="radio" controls autoplay crossorigin="anonymous">
-            <source src="https://hostingradio.ru" type="audio/mpeg">
+        <audio controls autoplay>
+            <source src="https://radio.5-tv.ru/radio.mp3" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
-
-        <button id="record-btn" class="record-btn">
-            <span id="dot">🔴</span> <span id="text">Записать эфир</span>
-        </button>
     </div>
-
-    <script>
-        const audio = document.getElementById('radio');
-        const recordBtn = document.getElementById('record-btn');
-        const btnText = document.getElementById('text');
-        const btnDot = document.getElementById('dot');
-
-        let mediaRecorder;
-        let audioChunks = [];
-        let isRecording = false;
-        let audioContext;
-        let source;
-        let streamDest;
-
-        recordBtn.addEventListener('click', () => {
-            if (!isRecording) {
-                try {
-                    audioChunks = [];
-                    
-                    // Запуск цифрового контекста для захвата звука из плеера
-                    if (!audioContext) {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        source = audioContext.createMediaElementSource(audio);
-                        streamDest = audioContext.createMediaStreamDestination();
-                        source.connect(streamDest);
-                        source.connect(audioContext.destination);
-                    }
-
-                    mediaRecorder = new MediaRecorder(streamDest.stream);
-                    
-                    mediaRecorder.ondataavailable = event => {
-                        if (event.data.size > 0) audioChunks.push(event.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        const link = document.createElement('a');
-                        link.href = audioUrl;
-                        link.download = 'radio_record.mp3';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    recordBtn.classList.add('recording');
-                    btnText.textContent = 'Остановить и сохранить';
-                    btnDot.textContent = '⏹️';
-                } catch (err) {
-                    console.error('Ошибка записи:', err);
-                    alert('Запустите радио перед началом записи!');
-                }
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                recordBtn.classList.remove('recording');
-                btnText.textContent = 'Записать эфир';
-                btnDot.textContent = '🔴';
-            }
-        });
-    </script>
 
 </body>
 </html>
