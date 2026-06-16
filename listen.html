@@ -17,12 +17,12 @@
         }
         .radio-container {
             text-align: center;
-            background: #111827;
+            background: #111827; /* Другой цвет, чтобы сразу отличить Слушателя */
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             width: 350px;
-            border: 1px solid #10b981;
+            border: 1px solid #10b981; /* Зеленая рамка для Слушателя */
         }
         h1 {
             font-size: 22px;
@@ -48,8 +48,9 @@
         <h1>Радио (Слушатель)</h1>
         <div class="subtitle">Подключенная трансляция эфира</div>
         
+        <!-- Используем строго тот же рабочий поток, что и на первой странице -->
         <audio controls autoplay>
-            <source src="https://5-tv.ru" type="audio/mpeg">
+            <source src="https://radio.5-tv.ru/radio.mp3" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
     </div>
