@@ -9,55 +9,24 @@
         .radio-container { text-align: center; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 350px; }
         h1 { font-size: 20px; color: #10b981; text-transform: uppercase; margin-bottom: 5px; }
         .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 25px; }
-        input { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #334155; background: #0f172a; color: white; text-align: center; font-size: 16px; margin-bottom: 15px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px; border: none; border-radius: 6px; background: #10b981; color: white; font-weight: bold; cursor: pointer; font-size: 15px; }
-        button:hover { background: #059669; }
-        audio { width: 100%; margin-top: 20px; display: none; }
+        audio { width: 100%; margin-bottom: 20px; }
+        .back-link { display: inline-block; color: #38bdf8; text-decoration: none; margin-top: 15px; font-size: 14px; }
+        .back-link:hover { text-decoration: underline; }
     </style>
-    <script src="https://unpkg.com"></script>
 </head>
 <body>
 
     <div class="radio-container">
         <h1>Радио (Слушатель)</h1>
-        <div class="subtitle">Прием трансляции</div>
+        <div class="subtitle">Подключенная трансляция эфира</div>
         
-        <input type="text" id="host-id" placeholder="Вставьте ID вещателя">
-        <button id="connect-btn">Подключиться к эфиру</button>
+        <audio controls autoplay>
+            <source src="https://5-tv.ru" type="audio/mpeg">
+            Ваш браузер не поддерживает элемент audio.
+        </audio>
 
-        <audio id="remote-audio" controls autoplay></audio>
+        <a href="index.html" class="back-link">← Вернуться к вещателю</a>
     </div>
 
-    <script>
-        const connectBtn = document.getElementById('connect-btn');
-        const hostIdInput = document.getElementById('host-id');
-        const remoteAudio = document.getElementById('remote-audio');
-
-        // Настройки сервера должны совпадать на обеих страницах
-        const peer = new Peer({
-            host: '://peerjs.com',
-            port: 443,
-            path: '/',
-            secure: true
-        });
-
-        connectBtn.addEventListener('click', () => {
-            const hostId = hostIdInput.value.trim();
-            if (!hostId) {
-                alert('Введите ID вещателя!');
-                return;
-            }
-
-            const fakeStream = new MediaStream();
-            const call = peer.call(hostId, fakeStream);
-
-            call.on('stream', (remoteStream) => {
-                remoteAudio.srcObject = remoteStream;
-                remoteAudio.style.display = 'block'; 
-                connectBtn.textContent = 'Вы в эфире!';
-                connectBtn.style.background = '#38bdf8';
-            });
-        });
-    </script>
 </body>
 </html>
