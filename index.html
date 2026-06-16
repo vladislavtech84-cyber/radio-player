@@ -4,7 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Радио Петербург</title>
-    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Общие стили для страницы */
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            font-family: Arial, sans-serif;
+            color: #fff;
+        }
+
+        /* Карточка плеера */
+        .player-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 35px 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            text-align: center;
+            width: 280px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin: 10px 0 5px 0;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        .status {
+            font-size: 13px;
+            color: #00ffcc;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        /* Кнопка */
+        #play-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .play {
+            background-color: #00ffcc;
+            color: #1e3c72;
+            box-shadow: 0 4px 15px rgba(0, 255, 204, 0.3);
+        }
+
+        .play:hover {
+            background-color: #00e6b8;
+            transform: scale(1.02);
+        }
+
+        .paused {
+            background-color: #ff4d4d;
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 77, 77, 0.3);
+        }
+
+        .paused:hover {
+            background-color: #ff3333;
+            transform: scale(1.02);
+        }
+    </style>
 </head>
 <body>
 
@@ -13,8 +93,8 @@
         <h2>Радио Петербург</h2>
         <p class="status">В эфире</p>
         
-        <!-- Аудиопоток Радио Петербург -->
-        <audio id="radio-stream" src="https://rfn.ru"></audio>
+        <!-- Рабочий HTTPS-поток (не блокируется браузерами) -->
+        <audio id="radio-stream" src="https://cdnvideo.ru" preload="none"></audio>
         
         <!-- Кнопка включения -->
         <button id="play-btn" class="play">Воспроизвести</button>
@@ -26,13 +106,19 @@
 
         btn.addEventListener('click', () => {
             if (audio.paused) {
-                audio.play();
-                btn.textContent = 'Пауза';
-                btn.classList.add('paused');
+                audio.play()
+                    .then(() => {
+                        btn.textContent = 'Пауза';
+                        btn.className = 'paused';
+                    })
+                    .catch(error => {
+                        console.error("Ошибка воспроизведения:", error);
+                        alert("Не удалось запустить поток. Попробуйте еще раз.");
+                    });
             } else {
                 audio.pause();
                 btn.textContent = 'Воспроизвести';
-                btn.classList.remove('paused');
+                btn.className = 'play';
             }
         });
     </script>
