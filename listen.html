@@ -55,6 +55,7 @@
             justify-content: center;
             align-items: center;
             gap: 8px;
+            margin-bottom: 15px;
         }
         .record-btn:hover {
             background-color: #dc2626;
@@ -63,6 +64,15 @@
         .record-btn.recording {
             background-color: #10b981;
             animation: pulse 1.5s infinite;
+        }
+        .back-link {
+            display: inline-block;
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
         }
         @keyframes pulse {
             0% { opacity: 1; }
@@ -77,16 +87,16 @@
         <h1>Радио (Слушатель)</h1>
         <div class="subtitle">Подключенная трансляция с записью</div>
         
-        <!-- Чистый поток без ограничений безопасности -->
         <audio id="radio" controls autoplay>
             <source src="https://5-tv.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
-        <!-- Кнопка записи -->
         <button id="record-btn" class="record-btn">
             <span id="dot">🔴</span> <span id="text">Записать эфир</span>
         </button>
+
+        <a href="index.html" class="back-link">← Вернуться на главную</a>
     </div>
 
     <script>
@@ -104,7 +114,6 @@
                 try {
                     audioChunks = [];
                     
-                    // Безопасный захват звука вкладки без блокировки радио
                     recordStream = await navigator.mediaDevices.getDisplayMedia({ 
                         video: { displaySurface: "browser" },
                         audio: {
@@ -136,7 +145,6 @@
                         link.click();
                         document.body.removeChild(link);
 
-                        // Отключаем системный захват
                         recordStream.getTracks().forEach(track => track.stop());
                     };
 
