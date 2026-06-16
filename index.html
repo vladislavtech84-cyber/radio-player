@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург</title>
+    <title>Радио Плеер</title>
     <style>
         /* Общие стили для страницы */
         body {
@@ -50,7 +50,7 @@
             letter-spacing: 2px;
         }
 
-        /* Кнопка */
+        /* Кнопка управления */
         #play-btn {
             width: 100%;
             padding: 14px;
@@ -90,11 +90,11 @@
 
     <div class="player-card">
         <div class="logo">📻</div>
-        <h2>Радио Петербург</h2>
+        <h2>Радио Плеер</h2>
         <p class="status">В эфире</p>
         
-        <!-- Рабочий HTTPS-поток (не блокируется браузерами) -->
-       <audio id="radio-stream" src="https://linknet.lv" preload="none"></audio>
+        <!-- Новая стабильная HTTPS ссылка, которая работает прямо сейчас -->
+        <audio id="radio-stream" src="https://suocast.com" preload="none"></audio>
         
         <!-- Кнопка включения -->
         <button id="play-btn" class="play">Воспроизвести</button>
@@ -124,4 +124,3 @@
     </script>
 </body>
 </html>
-
