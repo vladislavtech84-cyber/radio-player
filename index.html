@@ -38,6 +38,22 @@
         audio {
             width: 100%;
             margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .nav-btn {
+            display: block;
+            padding: 12px;
+            background: #10b981;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+        .nav-btn:hover {
+            background: #059669;
         }
     </style>
 </head>
@@ -48,9 +64,12 @@
         <div class="subtitle">Прямой эфир вещания</div>
         
         <audio controls autoplay>
-            <source src="https://radio.5-tv.ru/radio.mp3" type="audio/mpeg">
+            <source src="https://5-tv.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
+
+        <!-- Кнопка автоматического перехода на вторую страницу -->
+        <a href="listen.html" class="nav-btn">Перейти к записи (Слушатель)</a>
     </div>
 
 </body>
