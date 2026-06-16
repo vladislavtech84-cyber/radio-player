@@ -12,7 +12,6 @@
         audio { width: 100%; margin-bottom: 20px; }
         .key-box { background: #0f172a; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 16px; color: #10b981; word-break: break-all; margin-top: 10px; }
     </style>
-    <!-- Подключаем бесплатную библиотеку PeerJS для связи -->
     <script src="https://unpkg.com"></script>
 </head>
 <body>
@@ -33,14 +32,23 @@
         const audio = document.getElementById('radio');
         const peerIdDiv = document.getElementById('peer-id');
 
-        // Создаем подключение
-        const peer = new Peer();
-
-        peer.on('open', (id) => {
-            peerIdDiv.textContent = id; // Показываем ID на экране
+        // Подключаемся к стабильному публичному серверу вместо зависшего стандартного
+        const peer = new Peer({
+            host: '://peerjs.com',
+            port: 443,
+            path: '/',
+            secure: true
         });
 
-        // Захватываем звук из плеера, когда к нам подключаются
+        peer.on('open', (id) => {
+            peerIdDiv.textContent = id; 
+        });
+
+        peer.on('error', (err) => {
+            console.error(err);
+            peerIdDiv.textContent = "Ошибка. Переподключение...";
+        });
+
         peer.on('call', (call) => {
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             const source = audioContext.createMediaElementSource(audio);
@@ -49,7 +57,6 @@
             source.connect(dest);
             source.connect(audioContext.destination);
 
-            // Отправляем чистый цифровой звук слушателю
             call.answer(dest.stream); 
         });
     </script>
