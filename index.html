@@ -10,55 +10,23 @@
         h1 { font-size: 20px; color: #38bdf8; text-transform: uppercase; margin-bottom: 5px; }
         .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 25px; }
         audio { width: 100%; margin-bottom: 20px; }
-        .key-box { background: #0f172a; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 16px; color: #10b981; word-break: break-all; margin-top: 10px; }
+        .link-btn { display: block; width: 100%; padding: 12px; border-radius: 6px; background: #10b981; color: white; font-weight: bold; text-decoration: none; font-size: 15px; box-sizing: border-box; transition: background 0.3s; }
+        .link-btn:hover { background: #059669; }
     </style>
-    <script src="https://unpkg.com"></script>
 </head>
 <body>
 
     <div class="radio-container">
         <h1>Радио (Вещатель)</h1>
-        <div class="subtitle">Передача потока с GitHub</div>
+        <div class="subtitle">Главная страница вещания</div>
         
-        <audio id="radio" controls autoplay crossorigin="anonymous">
-            <source src="https://suocast.com" type="audio/mpeg">
+        <audio controls autoplay>
+            <source src="https://5-tv.ru" type="audio/mpeg">
+            Ваш браузер не поддерживает элемент audio.
         </audio>
 
-        <div>Ваш секретный ID для подключения:</div>
-        <div id="peer-id" class="key-box">Создание ключа...</div>
+        <a href="listen.html" class="link-btn">Подключить вторую страницу</a>
     </div>
 
-    <script>
-        const audio = document.getElementById('radio');
-        const peerIdDiv = document.getElementById('peer-id');
-
-        // Подключаемся к стабильному публичному серверу вместо зависшего стандартного
-        const peer = new Peer({
-            host: '://peerjs.com',
-            port: 443,
-            path: '/',
-            secure: true
-        });
-
-        peer.on('open', (id) => {
-            peerIdDiv.textContent = id; 
-        });
-
-        peer.on('error', (err) => {
-            console.error(err);
-            peerIdDiv.textContent = "Ошибка. Переподключение...";
-        });
-
-        peer.on('call', (call) => {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const source = audioContext.createMediaElementSource(audio);
-            const dest = audioContext.createMediaStreamDestination();
-            
-            source.connect(dest);
-            source.connect(audioContext.destination);
-
-            call.answer(dest.stream); 
-        });
-    </script>
 </body>
 </html>
