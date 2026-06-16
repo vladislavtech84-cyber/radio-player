@@ -5,94 +5,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Радио Петербург — Слушатель</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0b1325;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .radio-container {
-            text-align: center;
-            background: #111827;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            width: 350px;
-            border: 1px solid #10b981;
-        }
-        h1 {
-            font-size: 22px;
-            color: #10b981;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .subtitle {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-bottom: 25px;
-        }
-        audio {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .record-btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: #ef4444;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-        .record-btn:hover {
-            background-color: #dc2626;
-            transform: scale(1.02);
-        }
-        .record-btn.recording {
-            background-color: #10b981;
-            animation: pulse 1.5s infinite;
-        }
-        .back-link {
-            display: inline-block;
-            color: #38bdf8;
-            text-decoration: none;
-            font-size: 13px;
-        }
-        .back-link:hover {
-            text-decoration: underline;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
+        body { font-family: Arial, sans-serif; background-color: #0b1325; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .radio-container { text-align: center; background: #111827; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 350px; border: 1px solid #10b981; }
+        h1 { font-size: 22px; color: #10b981; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+        .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 25px; }
+        audio { width: 100%; margin-bottom: 20px; }
+        .record-btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; background-color: #ef4444; color: white; display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 15px; }
+        .record-btn:hover { background-color: #dc2626; }
+        .record-btn.recording { background-color: #10b981; animation: pulse 1.5s infinite; }
+        .back-link { display: inline-block; color: #38bdf8; text-decoration: none; font-size: 13px; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
-
     <div class="radio-container">
         <h1>Радио (Слушатель)</h1>
         <div class="subtitle">Подключенная трансляция с записью</div>
         
+        <!-- Тот же защищенный поток без ограничений безопасности -->
         <audio id="radio" controls autoplay>
-            <source src="https://5-tv.ru" type="audio/mpeg">
+            <source src="https://cdnvideo.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
-        <!-- Кнопка записи эфира -->
         <button id="record-btn" class="record-btn">
             <span id="dot">🔴</span> <span id="text">Записать эфир</span>
         </button>
@@ -114,15 +49,9 @@
             if (!isRecording) {
                 try {
                     audioChunks = [];
-                    
-                    // Безопасный метод захвата звука конкретной вкладки (без конфликтов CORS)
                     recordStream = await navigator.mediaDevices.getDisplayMedia({ 
                         video: { displaySurface: "browser" },
-                        audio: {
-                            echoCancellation: false,
-                            noiseSuppression: false,
-                            autoGainControl: false
-                        } 
+                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
                     });
                     
                     const audioTrack = recordStream.getAudioTracks();
@@ -146,7 +75,6 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-
                         recordStream.getTracks().forEach(track => track.stop());
                     };
 
@@ -168,6 +96,5 @@
             }
         });
     </script>
-
 </body>
 </html>
