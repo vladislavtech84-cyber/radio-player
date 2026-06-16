@@ -1,84 +1,15 @@
-<!DOCTYPE html>
+html<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Плеер</title>
-    <style>
-        /* Общие стили для страницы */
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            font-family: Arial, sans-serif;
-            color: #fff;
-        }
-
-        /* Карточка плеера */
-        .player-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-            text-align: center;
-            width: 320px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .logo {
-            font-size: 45px;
-            margin-bottom: 5px;
-        }
-
-        h2 {
-            margin: 5px 0;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .status {
-            font-size: 12px;
-            color: #00ffcc;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        /* Контейнер для встроенного официального плеера */
-        .iframe-container {
-            width: 100%;
-            height: 140px;
-            border-radius: 15px;
-            overflow: hidden;
-            background: rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-    </style>
+    <title>Радио</title>
 </head>
-<body>
+<body style="background: #1e3c72; color: #fff; text-align: center; font-family: Arial; padding-top: 100px;">
 
-    <div class="player-card">
-        <div class="logo">📻</div>
-        <h2>Радио Эфир</h2>
-        <p class="status">Онлайн Трансляция</p>
-        
-        <!-- Официальный веб-виджет радио, разрешенный для GitHub Pages -->
-        <div class="iframe-container">
-            <iframe src="https://radiorecord.ru" allow="autoplay"></iframe>
-        </div>
-    </div>
+    <h1>📻 Радио онлайн</h1>
+    
+    <!-- Самый простой стандартный плеер с рабочей HTTPS ссылкой -->
+    <audio controls src="https://suocast.com"></audio>
 
 </body>
 </html>
