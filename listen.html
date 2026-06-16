@@ -17,12 +17,12 @@
         }
         .radio-container {
             text-align: center;
-            background: #111827; /* Другой цвет, чтобы сразу отличить Слушателя */
+            background: #111827;
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             width: 350px;
-            border: 1px solid #10b981; /* Зеленая рамка для Слушателя */
+            border: 1px solid #10b981;
         }
         h1 {
             font-size: 22px;
@@ -34,11 +34,50 @@
         .subtitle {
             font-size: 13px;
             color: #94a3b8;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
         audio {
             width: 100%;
-            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+        .record-btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background-color: #ef4444;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+        .record-btn:hover {
+            background-color: #dc2626;
+            transform: scale(1.02);
+        }
+        .record-btn.recording {
+            background-color: #10b981;
+            animation: pulse 1.5s infinite;
+        }
+        .back-link {
+            display: inline-block;
+            color: #38bdf8;
+            text-decoration: none;
+            font-size: 13px;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -46,14 +85,89 @@
 
     <div class="radio-container">
         <h1>Радио (Слушатель)</h1>
-        <div class="subtitle">Подключенная трансляция эфира</div>
+        <div class="subtitle">Подключенная трансляция с записью</div>
         
-        <!-- Используем строго тот же рабочий поток, что и на первой странице -->
-        <audio controls autoplay>
-            <source src="https://radio.5-tv.ru/radio.mp3" type="audio/mpeg">
+        <audio id="radio" controls autoplay>
+            <source src="https://5-tv.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
+
+        <!-- Кнопка записи эфира -->
+        <button id="record-btn" class="record-btn">
+            <span id="dot">🔴</span> <span id="text">Записать эфир</span>
+        </button>
+
+        <a href="index.html" class="back-link">← На главную страницу</a>
     </div>
+
+    <script>
+        const recordBtn = document.getElementById('record-btn');
+        const btnText = document.getElementById('text');
+        const btnDot = document.getElementById('dot');
+
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let recordStream;
+
+        recordBtn.addEventListener('click', async () => {
+            if (!isRecording) {
+                try {
+                    audioChunks = [];
+                    
+                    // Безопасный метод захвата звука конкретной вкладки (без конфликтов CORS)
+                    recordStream = await navigator.mediaDevices.getDisplayMedia({ 
+                        video: { displaySurface: "browser" },
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        } 
+                    });
+                    
+                    const audioTrack = recordStream.getAudioTracks();
+                    if (audioTrack.length === 0) {
+                        throw new Error("Вы не активировали галочку 'Доступ к аудио'!");
+                    }
+                    
+                    const pureAudioStream = new MediaStream(audioTrack);
+                    mediaRecorder = new MediaRecorder(pureAudioStream);
+                    
+                    mediaRecorder.ondataavailable = event => {
+                        if (event.data.size > 0) audioChunks.push(event.data);
+                    };
+
+                    mediaRecorder.onstop = () => {
+                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const audioUrl = URL.createObjectURL(audioBlob);
+                        const link = document.createElement('a');
+                        link.href = audioUrl;
+                        link.download = 'radio_petersburg_record.mp3';
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+
+                        recordStream.getTracks().forEach(track => track.stop());
+                    };
+
+                    mediaRecorder.start();
+                    isRecording = true;
+                    recordBtn.classList.add('recording');
+                    btnText.textContent = 'Остановить и сохранить';
+                    btnDot.textContent = '⏹️';
+                } catch (err) {
+                    console.error('Ошибка записи:', err);
+                    alert(err.message || 'Для корректной записи выберите текущую вкладку и поставьте галочку "Предоставить доступ к аудио"!');
+                }
+            } else {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.classList.remove('recording');
+                btnText.textContent = 'Записать эфир';
+                btnDot.textContent = '🔴';
+            }
+        });
+    </script>
 
 </body>
 </html>
