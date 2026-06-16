@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — Финал</title>
+    <title>Радио Петербург — С записью</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -76,9 +76,9 @@
         <h1>Радио Петербург</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Чистый, стабильный HTTPS поток Радио Петербург. БЕЗ crossorigin. Плеер ОЖИВЕТ -->
-        <audio id="radio" controls autoplay>
-            <source src="https://cdnvideo.ru" type="audio/mpeg">
+        <!-- Полностью открытый и разблокированный поток Радио Петербург -->
+        <audio id="radio" controls autoplay crossorigin="anonymous">
+            <source src="https://allorigins.win" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
@@ -102,10 +102,9 @@
                 try {
                     audioChunks = [];
                     
-                    // Самый мощный метод: захватываем чистый звук прямо из вкладки браузера
-                    // При нажатии Chrome предложит выбрать эту вкладку для записи
+                    // Захват чистого звука прямо из вкладки браузера
                     recordStream = await navigator.mediaDevices.getDisplayMedia({ 
-                        video: { displaySurface: "browser" }, // Требуется для вызова окна Chrome
+                        video: { displaySurface: "browser" },
                         audio: {
                             echoCancellation: false,
                             noiseSuppression: false,
@@ -113,7 +112,6 @@
                         } 
                     });
                     
-                    // Вытаскиваем только звуковую дорожку из вкладки
                     const audioTrack = recordStream.getAudioTracks()[0];
                     if (!audioTrack) {
                         throw new Error("Вы не поставили галочку 'Предоставить доступ к аудио'!");
@@ -136,7 +134,7 @@
                         link.click();
                         document.body.removeChild(link);
 
-                        // Закрываем системный захват
+                        // Закрываем системный захват экрана
                         recordStream.getTracks().forEach(track => track.stop());
                     };
 
