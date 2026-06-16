@@ -76,8 +76,9 @@
         <h1>Радио Петербург</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <audio id="radio" controls autoplay>
-            <source src="https://5-tv.ru" type="audio/mpeg">
+        <!-- Используем рабочий прокси-поток, который разрешает и играть, и записывать без ошибок CORS -->
+        <audio id="radio" controls autoplay crossorigin="anonymous">
+            <source src="https://cdnvideo.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
@@ -95,15 +96,24 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
+        let streamDest;
 
-        recordBtn.addEventListener('click', async () => {
+        recordBtn.addEventListener('click', () => {
             if (!isRecording) {
                 try {
                     audioChunks = [];
-                    // Запрашиваем доступ к системному аудио/микрофону для записи звука из браузера
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     
-                    mediaRecorder = new MediaRecorder(stream);
+                    // Создаем аудио-контекст для захвата чистого цифрового звука прямо из плеера
+                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const source = audioContext.createMediaElementSource(audio);
+                    streamDest = audioContext.createMediaStreamDestination();
+                    
+                    // Раздваиваем поток: в динамики и на запись
+                    source.connect(streamDest);
+                    source.connect(audioContext.destination);
+
+                    mediaRecorder = new MediaRecorder(streamDest.stream);
+                    
                     mediaRecorder.ondataavailable = event => {
                         if (event.data.size > 0) audioChunks.push(event.data);
                     };
@@ -117,9 +127,6 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                        
-                        // Отключаем микрофон после записи
-                        stream.getTracks().forEach(track => track.stop());
                     };
 
                     mediaRecorder.start();
@@ -129,7 +136,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Для записи требуется разрешить доступ к аудио в браузере.');
+                    alert('Запустите воспроизведение радио перед началом записи!');
                 }
             } else {
                 mediaRecorder.stop();
