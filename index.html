@@ -39,7 +39,6 @@
             width: 100%;
             margin-bottom: 20px;
         }
-        /* Стили для кнопки записи */
         .record-btn {
             width: 100%;
             padding: 12px;
@@ -60,7 +59,6 @@
             background-color: #dc2626;
             transform: scale(1.02);
         }
-        /* Стиль кнопки во время активной записи */
         .record-btn.recording {
             background-color: #10b981;
             animation: pulse 1.5s infinite;
@@ -78,13 +76,11 @@
         <h1>Радио Петербург</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Добавлен crossorigin для обхода защиты при записи -->
-        <audio id="radio" controls autoplay crossorigin="anonymous">
+        <audio id="radio" controls autoplay>
             <source src="https://5-tv.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
-        <!-- Кнопка записи эфира -->
         <button id="record-btn" class="record-btn">
             <span id="dot">🔴</span> <span id="text">Записать эфир</span>
         </button>
@@ -102,27 +98,17 @@
 
         recordBtn.addEventListener('click', async () => {
             if (!isRecording) {
-                // Инициализация записи из аудио-элемента
                 try {
                     audioChunks = [];
-                    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    const source = audioContext.createMediaElementSource(audio);
-                    const dest = audioContext.createMediaStreamDestination();
+                    // Запрашиваем доступ к системному аудио/микрофону для записи звука из браузера
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     
-                    // Соединяем поток, чтобы звук шел и в динамики, и на запись
-                    source.connect(dest);
-                    source.connect(audioContext.destination);
-
-                    mediaRecorder = new MediaRecorder(dest.stream);
-
+                    mediaRecorder = new MediaRecorder(stream);
                     mediaRecorder.ondataavailable = event => {
-                        if (event.data.size > 0) {
-                            audioChunks.push(event.data);
-                        }
+                        if (event.data.size > 0) audioChunks.push(event.data);
                     };
 
                     mediaRecorder.onstop = () => {
-                        // Сохранение и скачивание файла по окончании записи
                         const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const link = document.createElement('a');
@@ -131,9 +117,11 @@
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
+                        
+                        // Отключаем микрофон после записи
+                        stream.getTracks().forEach(track => track.stop());
                     };
 
-                    // Старт записи
                     mediaRecorder.start();
                     isRecording = true;
                     recordBtn.classList.add('recording');
@@ -141,10 +129,9 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Для начала записи запустите воспроизведение радио!');
+                    alert('Для записи требуется разрешить доступ к аудио в браузере.');
                 }
             } else {
-                // Остановка записи
                 mediaRecorder.stop();
                 isRecording = false;
                 recordBtn.classList.remove('recording');
