@@ -76,8 +76,8 @@
         <h1>Радио Плеер</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Защищенный HTTPS-поток со всеми разрешениями CORS для записи -->
-        <audio id="radio" controls autoplay crossorigin="anonymous">
+        <!-- Оставили controls, чтобы вы могли управлять радио вручную -->
+        <audio id="radio" controls crossorigin="anonymous">
             <source src="https://hostingradio.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
@@ -100,18 +100,32 @@
         let source;
         let streamDest;
 
-        recordBtn.addEventListener('click', () => {
+        recordBtn.addEventListener('click', async () => {
+            // ШАГ 1: Принудительно запускаем аудио при клике, чтобы обойти блокировку Chrome
+            if (audio.paused) {
+                try {
+                    await audio.play();
+                } catch (playErr) {
+                    console.log("Автозапуск заблокирован, пробуем запустить запись напрямую");
+                }
+            }
+
             if (!isRecording) {
                 try {
                     audioChunks = [];
                     
-                    // Активируем аудио-контекст для захвата цифрового потока
+                    // ШАГ 2: Активируем аудио-контекст строго ПОСЛЕ клика пользователя
                     if (!audioContext) {
                         audioContext = new (window.AudioContext || window.webkitAudioContext)();
                         source = audioContext.createMediaElementSource(audio);
                         streamDest = audioContext.createMediaStreamDestination();
                         source.connect(streamDest);
                         source.connect(audioContext.destination);
+                    }
+
+                    // Обязательно «будим» контекст, если он заснул
+                    if (audioContext.state === 'suspended') {
+                        await audioContext.resume();
                     }
 
                     mediaRecorder = new MediaRecorder(streamDest.stream);
@@ -138,7 +152,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Запустите радио перед началом записи!');
+                    alert('Не удалось запустить запись. Сначала включите радио кнопкой Play.');
                 }
             } else {
                 mediaRecorder.stop();
