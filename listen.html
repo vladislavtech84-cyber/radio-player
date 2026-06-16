@@ -3,29 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — Слушатель</title>
+    <title>Радио Петербург — Вещатель</title>
     <style>
         body { font-family: Arial, sans-serif; background-color: #0b1325; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .radio-container { text-align: center; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 350px; }
-        h1 { font-size: 20px; color: #10b981; text-transform: uppercase; margin-bottom: 5px; }
+        h1 { font-size: 20px; color: #38bdf8; text-transform: uppercase; margin-bottom: 5px; }
         .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 25px; }
         audio { width: 100%; margin-bottom: 20px; }
-        .back-link { display: inline-block; color: #38bdf8; text-decoration: none; margin-top: 15px; font-size: 14px; }
-        .back-link:hover { text-decoration: underline; }
+        .link-btn { display: block; width: 100%; padding: 12px; border-radius: 6px; background: #10b981; color: white; font-weight: bold; text-decoration: none; font-size: 15px; box-sizing: border-box; transition: background 0.3s; }
+        .link-btn:hover { background: #059669; }
     </style>
 </head>
 <body>
 
     <div class="radio-container">
-        <h1>Радио (Слушатель)</h1>
-        <div class="subtitle">Подключенная трансляция эфира</div>
+        <h1>Радио (Вещатель)</h1>
+        <div class="subtitle">Главная страница вещания</div>
         
+        <!-- Полностью защищенный HTTPS-поток (не блокируется браузерами) -->
         <audio controls autoplay>
-            <source src="https://5-tv.ru" type="audio/mpeg">
+            <source src="https://cdnvideo.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
-        <a href="index.html" class="back-link">← Вернуться к вещателю</a>
+        <a href="listen.html" class="link-btn">Подключить вторую страницу</a>
     </div>
 
 </body>
