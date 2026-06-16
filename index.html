@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Плеер — С записью</title>
+    <title>Радио Петербург — С записью</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,12 +73,12 @@
 <body>
 
     <div class="radio-container">
-        <h1>Радио Плеер</h1>
+        <h1>Радио Петербург</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Оставили controls, чтобы вы могли управлять радио вручную -->
-        <audio id="radio" controls crossorigin="anonymous">
-            <source src="https://hostingradio.ru" type="audio/mpeg">
+        <!-- Ссылка возвращена на поток Радио Петербург -->
+        <audio id="radio" controls autoplay>
+            <source src="https://5-tv.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
@@ -88,7 +88,6 @@
     </div>
 
     <script>
-        const audio = document.getElementById('radio');
         const recordBtn = document.getElementById('record-btn');
         const btnText = document.getElementById('text');
         const btnDot = document.getElementById('dot');
@@ -96,39 +95,17 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
-        let audioContext;
-        let source;
-        let streamDest;
+        let localStream;
 
         recordBtn.addEventListener('click', async () => {
-            // ШАГ 1: Принудительно запускаем аудио при клике, чтобы обойти блокировку Chrome
-            if (audio.paused) {
-                try {
-                    await audio.play();
-                } catch (playErr) {
-                    console.log("Автозапуск заблокирован, пробуем запустить запись напрямую");
-                }
-            }
-
             if (!isRecording) {
                 try {
                     audioChunks = [];
                     
-                    // ШАГ 2: Активируем аудио-контекст строго ПОСЛЕ клика пользователя
-                    if (!audioContext) {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        source = audioContext.createMediaElementSource(audio);
-                        streamDest = audioContext.createMediaStreamDestination();
-                        source.connect(streamDest);
-                        source.connect(audioContext.destination);
-                    }
-
-                    // Обязательно «будим» контекст, если он заснул
-                    if (audioContext.state === 'suspended') {
-                        await audioContext.resume();
-                    }
-
-                    mediaRecorder = new MediaRecorder(streamDest.stream);
+                    // Запрашиваем аудиопоток браузера
+                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    
+                    mediaRecorder = new MediaRecorder(localStream);
                     
                     mediaRecorder.ondataavailable = event => {
                         if (event.data.size > 0) audioChunks.push(event.data);
@@ -139,10 +116,13 @@
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const link = document.createElement('a');
                         link.href = audioUrl;
-                        link.download = 'radio_record.mp3';
+                        link.download = 'radio_petersburg_record.mp3';
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
+
+                        // Отключаем захват после сохранения файла
+                        localStream.getTracks().forEach(track => track.stop());
                     };
 
                     mediaRecorder.start();
@@ -152,7 +132,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Не удалось запустить запись. Сначала включите радио кнопкой Play.');
+                    alert('Для записи необходимо разрешить доступ к аудио в браузере.');
                 }
             } else {
                 mediaRecorder.stop();
