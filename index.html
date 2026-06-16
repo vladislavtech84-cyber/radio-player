@@ -76,9 +76,9 @@
         <h1>Радио Петербург</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Ссылка возвращена на поток Радио Петербург -->
-        <audio id="radio" controls autoplay>
-            <source src="https://5-tv.ru" type="audio/mpeg">
+        <!-- Прокси-ссылка открывает полный доступ для браузера без блокировок -->
+        <audio id="radio" controls autoplay crossorigin="anonymous">
+            <source src="https://corsproxy.io" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
@@ -88,6 +88,7 @@
     </div>
 
     <script>
+        const audio = document.getElementById('radio');
         const recordBtn = document.getElementById('record-btn');
         const btnText = document.getElementById('text');
         const btnDot = document.getElementById('dot');
@@ -95,17 +96,34 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
-        let localStream;
+        let audioContext;
+        let source;
+        let streamDest;
 
         recordBtn.addEventListener('click', async () => {
+            // Если радио не играет, запускаем его принудительно перед записью
+            if (audio.paused) {
+                try { await audio.play(); } catch(e) {}
+            }
+
             if (!isRecording) {
                 try {
                     audioChunks = [];
                     
-                    // Запрашиваем аудиопоток браузера
-                    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    
-                    mediaRecorder = new MediaRecorder(localStream);
+                    // Создаем безопасный захват цифрового аудио
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        source = audioContext.createMediaElementSource(audio);
+                        streamDest = audioContext.createMediaStreamDestination();
+                        source.connect(streamDest);
+                        source.connect(audioContext.destination);
+                    }
+
+                    if (audioContext.state === 'suspended') {
+                        await audioContext.resume();
+                    }
+
+                    mediaRecorder = new MediaRecorder(streamDest.stream);
                     
                     mediaRecorder.ondataavailable = event => {
                         if (event.data.size > 0) audioChunks.push(event.data);
@@ -116,13 +134,10 @@
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const link = document.createElement('a');
                         link.href = audioUrl;
-                        link.download = 'radio_petersburg_record.mp3';
+                        link.download = 'radio_petersburg.mp3';
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-
-                        // Отключаем захват после сохранения файла
-                        localStream.getTracks().forEach(track => track.stop());
                     };
 
                     mediaRecorder.start();
@@ -132,7 +147,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Для записи необходимо разрешить доступ к аудио в браузере.');
+                    alert('Пожалуйста, сначала запустите плеер кнопкой Play!');
                 }
             } else {
                 mediaRecorder.stop();
