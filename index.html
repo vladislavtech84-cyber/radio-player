@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — С записью</title>
+    <title>Радио Плеер — С записью</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -73,12 +73,12 @@
 <body>
 
     <div class="radio-container">
-        <h1>Радио Петербург</h1>
+        <h1>Радио Плеер</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Прокси-ссылка открывает полный доступ для браузера без блокировок -->
+        <!-- Ссылка на поток со всеми разрешениями CORS для стабильной цифровой записи -->
         <audio id="radio" controls autoplay crossorigin="anonymous">
-            <source src="https://corsproxy.io" type="audio/mpeg">
+            <source src="https://hostingradio.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
@@ -100,27 +100,18 @@
         let source;
         let streamDest;
 
-        recordBtn.addEventListener('click', async () => {
-            // Если радио не играет, запускаем его принудительно перед записью
-            if (audio.paused) {
-                try { await audio.play(); } catch(e) {}
-            }
-
+        recordBtn.addEventListener('click', () => {
             if (!isRecording) {
                 try {
                     audioChunks = [];
                     
-                    // Создаем безопасный захват цифрового аудио
+                    // Запуск цифрового контекста для захвата звука из плеера
                     if (!audioContext) {
                         audioContext = new (window.AudioContext || window.webkitAudioContext)();
                         source = audioContext.createMediaElementSource(audio);
                         streamDest = audioContext.createMediaStreamDestination();
                         source.connect(streamDest);
                         source.connect(audioContext.destination);
-                    }
-
-                    if (audioContext.state === 'suspended') {
-                        await audioContext.resume();
                     }
 
                     mediaRecorder = new MediaRecorder(streamDest.stream);
@@ -134,7 +125,7 @@
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const link = document.createElement('a');
                         link.href = audioUrl;
-                        link.download = 'radio_petersburg.mp3';
+                        link.download = 'radio_record.mp3';
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -147,7 +138,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Пожалуйста, сначала запустите плеер кнопкой Play!');
+                    alert('Запустите радио перед началом записи!');
                 }
             } else {
                 mediaRecorder.stop();
