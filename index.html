@@ -76,9 +76,9 @@
         <h1>Радио Петербург</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Полностью открытый и разблокированный поток Радио Петербург -->
+        <!-- Полностью открытый HTTPS-поток со всеми разрешениями для внутренней записи -->
         <audio id="radio" controls autoplay crossorigin="anonymous">
-            <source src="https://allorigins.win" type="audio/mpeg">
+            <source src="https://suocast.com" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
@@ -88,6 +88,7 @@
     </div>
 
     <script>
+        const audio = document.getElementById('radio');
         const recordBtn = document.getElementById('record-btn');
         const btnText = document.getElementById('text');
         const btnDot = document.getElementById('dot');
@@ -95,30 +96,34 @@
         let mediaRecorder;
         let audioChunks = [];
         let isRecording = false;
-        let recordStream;
+        let audioContext;
+        let source;
+        let streamDest;
 
         recordBtn.addEventListener('click', async () => {
+            // Принудительно запускаем аудио, если оно на паузе
+            if (audio.paused) {
+                try { await audio.play(); } catch(e) {}
+            }
+
             if (!isRecording) {
                 try {
                     audioChunks = [];
                     
-                    // Захват чистого звука прямо из вкладки браузера
-                    recordStream = await navigator.mediaDevices.getDisplayMedia({ 
-                        video: { displaySurface: "browser" },
-                        audio: {
-                            echoCancellation: false,
-                            noiseSuppression: false,
-                            autoGainControl: false
-                        } 
-                    });
-                    
-                    const audioTrack = recordStream.getAudioTracks()[0];
-                    if (!audioTrack) {
-                        throw new Error("Вы не поставили галочку 'Предоставить доступ к аудио'!");
+                    // Прямой цифровой перехват звука без вызова окон Google Chrome
+                    if (!audioContext) {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        source = audioContext.createMediaElementSource(audio);
+                        streamDest = audioContext.createMediaStreamDestination();
+                        source.connect(streamDest);
+                        source.connect(audioContext.destination);
                     }
-                    
-                    const pureAudioStream = new MediaStream([audioTrack]);
-                    mediaRecorder = new MediaRecorder(pureAudioStream);
+
+                    if (audioContext.state === 'suspended') {
+                        await audioContext.resume();
+                    }
+
+                    mediaRecorder = new MediaRecorder(streamDest.stream);
                     
                     mediaRecorder.ondataavailable = event => {
                         if (event.data.size > 0) audioChunks.push(event.data);
@@ -129,13 +134,10 @@
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const link = document.createElement('a');
                         link.href = audioUrl;
-                        link.download = 'radio_petersburg_live.mp3';
+                        link.download = 'radio_record.mp3';
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-
-                        // Закрываем системный захват экрана
-                        recordStream.getTracks().forEach(track => track.stop());
                     };
 
                     mediaRecorder.start();
@@ -145,7 +147,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert(err.message || 'Для записи выберите текущую вкладку и включите галочку Аудио!');
+                    alert('Запустите радио перед началом записи!');
                 }
             } else {
                 mediaRecorder.stop();
@@ -159,3 +161,15 @@
 
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
