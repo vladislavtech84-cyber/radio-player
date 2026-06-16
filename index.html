@@ -1,1 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Радио Петербург</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
+    <div class="player-card">
+        <div class="logo">📻</div>
+        <h2>Радио Петербург</h2>
+        <p class="status">В эфире</p>
+        
+        <!-- Аудиопоток Радио Петербург -->
+        <audio id="radio-stream" src="https://rfn.ru"></audio>
+        
+        <!-- Кнопка включения -->
+        <button id="play-btn" class="play">Воспроизвести</button>
+    </div>
+
+    <script>
+        const audio = document.getElementById('radio-stream');
+        const btn = document.getElementById('play-btn');
+
+        btn.addEventListener('click', () => {
+            if (audio.paused) {
+                audio.play();
+                btn.textContent = 'Пауза';
+                btn.classList.add('paused');
+            } else {
+                audio.pause();
+                btn.textContent = 'Воспроизвести';
+                btn.classList.remove('paused');
+            }
+        });
+    </script>
+</body>
+</html>
