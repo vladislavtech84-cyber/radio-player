@@ -22,9 +22,9 @@
         <h1>Радио (Слушатель)</h1>
         <div class="subtitle">Подключенная трансляция с записью</div>
         
-        <!-- Тот же защищенный поток без ограничений безопасности -->
+        <!-- Такой же оригинальный рабочий поток -->
         <audio id="radio" controls autoplay>
-            <source src="https://cdnvideo.ru" type="audio/mpeg">
+            <source src="https://5-tv.ru" type="audio/mpeg">
             Ваш браузер не поддерживает элемент audio.
         </audio>
 
@@ -49,9 +49,10 @@
             if (!isRecording) {
                 try {
                     audioChunks = [];
+                    // Захват только аудиодорожки вкладки через системное API без конфликтов со звуком плеера
                     recordStream = await navigator.mediaDevices.getDisplayMedia({ 
                         video: { displaySurface: "browser" },
-                        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } 
+                        audio: true 
                     });
                     
                     const audioTrack = recordStream.getAudioTracks();
@@ -59,8 +60,7 @@
                         throw new Error("Вы не активировали галочку 'Доступ к аудио'!");
                     }
                     
-                    const pureAudioStream = new MediaStream(audioTrack);
-                    mediaRecorder = new MediaRecorder(pureAudioStream);
+                    mediaRecorder = new MediaRecorder(new MediaStream(audioTrack));
                     
                     mediaRecorder.ondataavailable = event => {
                         if (event.data.size > 0) audioChunks.push(event.data);
@@ -85,7 +85,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert(err.message || 'Для корректной записи выберите текущую вкладку и поставьте галочку "Предоставить доступ к аудио"!');
+                    alert(err.message || 'Ошибка запуска записи!');
                 }
             } else {
                 mediaRecorder.stop();
