@@ -3,173 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радио Петербург — С записью</title>
+    <title>Радио Петербург — Вещатель</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0b1325;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .radio-container {
-            text-align: center;
-            background: #1e293b;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            width: 350px;
-        }
-        h1 {
-            font-size: 22px;
-            color: #38bdf8;
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .subtitle {
-            font-size: 13px;
-            color: #94a3b8;
-            margin-bottom: 25px;
-        }
-        audio {
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        .record-btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            font-size: 15px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: #ef4444;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-        .record-btn:hover {
-            background-color: #dc2626;
-            transform: scale(1.02);
-        }
-        .record-btn.recording {
-            background-color: #10b981;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.7; }
-            100% { opacity: 1; }
-        }
+        body { font-family: Arial, sans-serif; background-color: #0b1325; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .radio-container { text-align: center; background: #1e293b; padding: 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); width: 350px; }
+        h1 { font-size: 20px; color: #38bdf8; text-transform: uppercase; margin-bottom: 5px; }
+        .subtitle { font-size: 13px; color: #94a3b8; margin-bottom: 25px; }
+        audio { width: 100%; margin-bottom: 20px; }
+        .key-box { background: #0f172a; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 16px; color: #10b981; word-break: break-all; margin-top: 10px; }
     </style>
+    <!-- Подключаем бесплатную библиотеку PeerJS для связи -->
+    <script src="https://unpkg.com"></script>
 </head>
 <body>
 
     <div class="radio-container">
-        <h1>Радио Петербург</h1>
-        <div class="subtitle">Прямой эфир вещания</div>
+        <h1>Радио (Вещатель)</h1>
+        <div class="subtitle">Передача потока с GitHub</div>
         
-        <!-- Полностью открытый HTTPS-поток со всеми разрешениями для внутренней записи -->
         <audio id="radio" controls autoplay crossorigin="anonymous">
             <source src="https://suocast.com" type="audio/mpeg">
-            Ваш браузер не поддерживает элемент audio.
         </audio>
 
-        <button id="record-btn" class="record-btn">
-            <span id="dot">🔴</span> <span id="text">Записать эфир</span>
-        </button>
+        <div>Ваш секретный ID для подключения:</div>
+        <div id="peer-id" class="key-box">Создание ключа...</div>
     </div>
 
     <script>
         const audio = document.getElementById('radio');
-        const recordBtn = document.getElementById('record-btn');
-        const btnText = document.getElementById('text');
-        const btnDot = document.getElementById('dot');
+        const peerIdDiv = document.getElementById('peer-id');
 
-        let mediaRecorder;
-        let audioChunks = [];
-        let isRecording = false;
-        let audioContext;
-        let source;
-        let streamDest;
+        // Создаем подключение
+        const peer = new Peer();
 
-        recordBtn.addEventListener('click', async () => {
-            // Принудительно запускаем аудио, если оно на паузе
-            if (audio.paused) {
-                try { await audio.play(); } catch(e) {}
-            }
+        peer.on('open', (id) => {
+            peerIdDiv.textContent = id; // Показываем ID на экране
+        });
 
-            if (!isRecording) {
-                try {
-                    audioChunks = [];
-                    
-                    // Прямой цифровой перехват звука без вызова окон Google Chrome
-                    if (!audioContext) {
-                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                        source = audioContext.createMediaElementSource(audio);
-                        streamDest = audioContext.createMediaStreamDestination();
-                        source.connect(streamDest);
-                        source.connect(audioContext.destination);
-                    }
+        // Захватываем звук из плеера, когда к нам подключаются
+        peer.on('call', (call) => {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaElementSource(audio);
+            const dest = audioContext.createMediaStreamDestination();
+            
+            source.connect(dest);
+            source.connect(audioContext.destination);
 
-                    if (audioContext.state === 'suspended') {
-                        await audioContext.resume();
-                    }
-
-                    mediaRecorder = new MediaRecorder(streamDest.stream);
-                    
-                    mediaRecorder.ondataavailable = event => {
-                        if (event.data.size > 0) audioChunks.push(event.data);
-                    };
-
-                    mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        const link = document.createElement('a');
-                        link.href = audioUrl;
-                        link.download = 'radio_record.mp3';
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
-                    };
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    recordBtn.classList.add('recording');
-                    btnText.textContent = 'Остановить и сохранить';
-                    btnDot.textContent = '⏹️';
-                } catch (err) {
-                    console.error('Ошибка записи:', err);
-                    alert('Запустите радио перед началом записи!');
-                }
-            } else {
-                mediaRecorder.stop();
-                isRecording = false;
-                recordBtn.classList.remove('recording');
-                btnText.textContent = 'Записать эфир';
-                btnDot.textContent = '🔴';
-            }
+            // Отправляем чистый цифровой звук слушателю
+            call.answer(dest.stream); 
         });
     </script>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
