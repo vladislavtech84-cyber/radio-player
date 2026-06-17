@@ -1,4 +1,4 @@
-html<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -76,10 +76,10 @@ html<!DOCTYPE html>
         <h1>Радио Плеер</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Ссылка на поток со всеми разрешениями CORS для стабильной цифровой записи -->
-        <audio id="radio" controls autoplay crossorigin="anonymous">
-            <source src="https://hostingradio.ru" type="audio/mpeg">
-            Ваш браузер не поддерживает элемент audio.
+        <!-- Используем точный и безопасный HTTPS-адрес аудиопотока -->
+        <audio id="radio" controls crossorigin="anonymous">
+            <source src="https://radiorecord.hostingradio.ru/chil96.aacp" type="audio/aac">
+            Ваш browser не поддерживает элемент audio.
         </audio>
 
         <button id="record-btn" class="record-btn">
@@ -100,32 +100,46 @@ html<!DOCTYPE html>
         let source;
         let streamDest;
 
-        recordBtn.addEventListener('click', () => {
+        recordBtn.addEventListener('click', async () => {
+            if (audio.paused) {
+                alert('Сначала запустите воспроизведение радио!');
+                return;
+            }
+
             if (!isRecording) {
                 try {
                     audioChunks = [];
                     
-                    // Запуск цифрового контекста для захвата звука из плеера
                     if (!audioContext) {
                         audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                        
+                        if (audioContext.state === 'suspended') {
+                            await audioContext.resume();
+                        }
+                        
                         source = audioContext.createMediaElementSource(audio);
                         streamDest = audioContext.createMediaStreamDestination();
                         source.connect(streamDest);
                         source.connect(audioContext.destination);
                     }
 
-                    mediaRecorder = new MediaRecorder(streamDest.stream);
+                    // Автоматически выбираем формат, поддерживаемый текущим браузером
+                    const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/aac';
+                    mediaRecorder = new MediaRecorder(streamDest.stream, { mimeType });
                     
                     mediaRecorder.ondataavailable = event => {
                         if (event.data.size > 0) audioChunks.push(event.data);
                     };
 
                     mediaRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                        const audioBlob = new Blob(audioChunks, { type: mimeType });
                         const audioUrl = URL.createObjectURL(audioBlob);
                         const link = document.createElement('a');
                         link.href = audioUrl;
-                        link.download = 'radio_record.mp3';
+                        
+                        const ext = mimeType.includes('webm') ? 'webm' : 'aac';
+                        link.download = `radio_record.${ext}`;
+                        
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
@@ -138,7 +152,7 @@ html<!DOCTYPE html>
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Запустите радио перед началом записи!');
+                    alert('Не удалось начать запись из-за ограничений браузера.');
                 }
             } else {
                 mediaRecorder.stop();
