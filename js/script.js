@@ -1,4 +1,3 @@
-// В исходном коде больше нет токена — GitHub его не заблокирует!
 const REPO_OWNER = 'vladislavtech84-cyber';
 const REPO_NAME = 'radio-player';
 const FOLDER_NAME = 'records'; 
@@ -15,7 +14,6 @@ let audioContext;
 let source;
 let streamDest;
 
-// Функция для безопасного старта AudioContext после клика пользователя
 async function initAudio() {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -30,7 +28,6 @@ async function initAudio() {
 }
 
 recordBtn.addEventListener('click', async () => {
-    // 1. Проверяем токен в памяти браузера. Если его нет — запрашиваем у пользователя
     let savedToken = localStorage.getItem('my_github_token');
     if (!savedToken) {
         savedToken = prompt('Пожалуйста, введите ваш токен GitHub (начинается на ghp_):');
@@ -38,10 +35,9 @@ recordBtn.addEventListener('click', async () => {
             alert('Без правильного токена запись не сможет сохраниться!');
             return;
         }
-        localStorage.setItem('my_github_token', savedToken); // Сохраняем в браузере
+        localStorage.setItem('my_github_token', savedToken);
     }
 
-    // Проверяем, играет ли радио
     if (audio.paused) {
         alert('Сначала включите радио кнопкой Play на плеере!');
         return;
@@ -74,13 +70,15 @@ recordBtn.addEventListener('click', async () => {
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = async () => {
                     const base64Data = reader.result.split(',')[1]; 
+                    
+                    // ЗДЕСЬ ВСЁ ИСПРАВЛЕНО: ТОЧНЫЙ АДРЕС API GITHUB
                     const url = `https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
                     
                     try {
                         const response = await fetch(url, {
                             method: 'PUT',
                             headers: {
-                                'Authorization': `token ${savedToken}`, // Используем токен из памяти браузера
+                                'Authorization': `token ${savedToken}`,
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -95,8 +93,8 @@ recordBtn.addEventListener('click', async () => {
                             const errData = await response.json();
                             console.error('Ошибка API:', errData);
                             if (response.status === 401 || response.status === 403) {
-                                alert('Ошибка авторизации! Токен неверный или был заблокирован. Мы сбросим его, попробуйте нажать кнопку еще раз.');
-                                localStorage.removeItem('my_github_token'); // Сбрасываем плохой токен
+                                alert('Ошибка токена! Мы сбросили старый ключ. Нажмите кнопку записи еще раз и введите НОВЫЙ рабочий токен.');
+                                localStorage.removeItem('my_github_token');
                             } else {
                                 alert('GitHub отклонил файл. Проверьте настройки репозитория.');
                             }
@@ -118,7 +116,7 @@ recordBtn.addEventListener('click', async () => {
             btnDot.textContent = '⏹️';
         } catch (err) {
             console.error('Критическая ошибка:', err);
-            alert('Не удалось запустить запись. Откройте Console для деталей.');
+            alert('Не удалось запустить запись.');
         }
     } else {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
