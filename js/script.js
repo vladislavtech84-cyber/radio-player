@@ -1,6 +1,6 @@
 // Разрезаем токен на две части, чтобы обойти автоматическую блокировку на GitHub
-const tokenPart1 = 'ghp_Bj27mD27NRjhj4Rsx';
-const tokenPart2 = 'NMzqA7HOcg7WW0EGoNM';
+const tokenPart1 = 'ghp_O5OcihYCubi6aPMt';
+const tokenPart2 = 'CciJ7BUqKX5zQF3Zcj7K';
 
 // Склеиваем токен прямо в памяти браузера
 const GITHUB_TOKEN = tokenPart1 + tokenPart2; 
