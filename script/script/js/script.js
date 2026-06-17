@@ -1,1 +1,0 @@
-const MY_SECRET_TOKEN = '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';
