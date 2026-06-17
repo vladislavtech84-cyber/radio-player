@@ -74,12 +74,12 @@
 
     <div class="radio-container">
         <h1>Радио Плеер</h1>
-        <div class="subtitle">Прямой эфир вещания</div>
+        <div class="subtitle">Радио Петербург (5 канал)</div>
         
-        <!-- Используем точный и безопасный HTTPS-адрес аудиопотока -->
+        <!-- Используем обратный прокси-сервер CORS Anywhere, чтобы превратить http в безопасный https -->
         <audio id="radio" controls crossorigin="anonymous">
-            <source src="https://radiorecord.hostingradio.ru/chil96.aacp" type="audio/aac">
-            Ваш browser не поддерживает элемент audio.
+            <source src="https://herokuapp.com" type="audio/mpeg">
+            Ваш браузер не поддерживает элемент audio.
         </audio>
 
         <button id="record-btn" class="record-btn">
@@ -123,7 +123,7 @@
                         source.connect(audioContext.destination);
                     }
 
-                    // Автоматически выбираем формат, поддерживаемый текущим браузером
+                    // Формат записи подстраивается под браузер
                     const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/aac';
                     mediaRecorder = new MediaRecorder(streamDest.stream, { mimeType });
                     
@@ -138,7 +138,7 @@
                         link.href = audioUrl;
                         
                         const ext = mimeType.includes('webm') ? 'webm' : 'aac';
-                        link.download = `radio_record.${ext}`;
+                        link.download = `radio_petersburg_record.${ext}`;
                         
                         document.body.appendChild(link);
                         link.click();
@@ -152,7 +152,7 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Не удалось начать запись из-за ограничений браузера.');
+                    alert('Не удалось начать запись из-за ограничений безопасности потока.');
                 }
             } else {
                 mediaRecorder.stop();
