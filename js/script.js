@@ -72,7 +72,7 @@ recordBtn.addEventListener('click', async () => {
                     const base64Data = reader.result.split(',')[1]; 
                     
                     // ЗДЕСЬ ВСЁ ИСПРАВЛЕНО: ТОЧНЫЙ АДРЕС API GITHUB
-                    const url = `https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
+                    const url = `https://github.com${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
                     
                     try {
                         const response = await fetch(url, {
