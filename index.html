@@ -77,9 +77,9 @@
         <h1>Радио Плеер</h1>
         <div class="subtitle">Прямой эфир вещания</div>
         
-        <!-- Используем точный и безопасный HTTPS-адрес аудиопотока -->
+        <!-- Оригинальный аудиопоток из вашего старого текста -->
         <audio id="radio" controls crossorigin="anonymous">
-            <source src="https://radiorecord.hostingradio.ru/chil96.aacp" type="audio/aac">
+            <source src="https://hostingradio.ru" type="audio/aac">
             Ваш browser не поддерживает элемент audio.
         </audio>
 
@@ -89,6 +89,13 @@
     </div>
 
     <script>
+        // === НАСТРОЙКИ ДЛЯ СОХРАНЕНИЯ НА GITHUB ===
+        const GITHUB_TOKEN = MY_SECRET_TOKEN; 
+        const REPO_OWNER = 'vladislavtech84-cyber';
+        const REPO_NAME = 'radio-player';
+        const FOLDER_NAME = 'records'; 
+        // ==========================================
+
         const audio = document.getElementById('radio');
         const recordBtn = document.getElementById('record-btn');
         const btnText = document.getElementById('text');
@@ -124,7 +131,6 @@
                         source.connect(audioContext.destination);
                     }
 
-                    // Автоматически выбираем формат, поддерживаемый текущим браузером
                     const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/aac';
                     mediaRecorder = new MediaRecorder(streamDest.stream, { mimeType });
                     
@@ -133,17 +139,52 @@
                     };
 
                     mediaRecorder.onstop = () => {
+                        // Меняем текст кнопки на время загрузки в облако
+                        btnText.textContent = 'Сохранение на GitHub...';
+                        btnDot.textContent = '⏳';
+
                         const audioBlob = new Blob(audioChunks, { type: mimeType });
-                        const audioUrl = URL.createObjectURL(audioBlob);
-                        const link = document.createElement('a');
-                        link.href = audioUrl;
-                        
                         const ext = mimeType.includes('webm') ? 'webm' : 'aac';
-                        link.download = `radio_record.${ext}`;
                         
-                        document.body.appendChild(link);
-                        link.click();
-                        document.body.removeChild(link);
+                        const now = new Date();
+                        const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}`;
+                        const fileName = `radio_record-${dateStr}.${ext}`;
+
+                        // Перевод файла в Base64 для отправки через API
+                        const reader = new FileReader();
+                        reader.readAsDataURL(audioBlob);
+                        reader.onloadend = async () => {
+                            const base64Data = reader.result.split(',');
+                            const url = `https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
+                            
+                            try {
+                                const response = await fetch(url, {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Authorization': `token ${GITHUB_TOKEN}`,
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        message: `Запись радио: ${fileName}`,
+                                        content: base64Data
+                                    })
+                                });
+
+                                if (response.ok) {
+                                    alert(`Успешно! Файл добавлен в папку ${FOLDER_NAME}/${fileName}`);
+                                } else {
+                                    const errData = await response.json();
+                                    console.error(errData);
+                                    alert('Ошибка сохранения. Проверьте токен в config.js');
+                                }
+                            } catch (uploadErr) {
+                                console.error(uploadErr);
+                                alert('Сетевая ошибка при отправке файла на GitHub.');
+                            } finally {
+                                btnText.textContent = 'Записать эфир';
+                                btnDot.textContent = '🔴';
+                            }
+                        };
                     };
 
                     mediaRecorder.start();
@@ -153,17 +194,14 @@
                     btnDot.textContent = '⏹️';
                 } catch (err) {
                     console.error('Ошибка записи:', err);
-                    alert('Не удалось начать запись из-за ограничений браузера.');
+                    alert('Не удалось начать запись.');
                 }
             } else {
                 mediaRecorder.stop();
                 isRecording = false;
                 recordBtn.classList.remove('recording');
-                btnText.textContent = 'Записать эфир';
-                btnDot.textContent = '🔴';
             }
         });
     </script>
-
 </body>
 </html>
