@@ -21,9 +21,24 @@ let audioContext;
 let source;
 let streamDest;
 
+// Функция для безопасного старта AudioContext после клика пользователя
+async function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        source = audioContext.createMediaElementSource(audio);
+        streamDest = audioContext.createMediaStreamDestination();
+        source.connect(streamDest);
+        source.connect(audioContext.destination);
+    }
+    if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+    }
+}
+
 recordBtn.addEventListener('click', async () => {
+    // Проверяем, играет ли радио. Если нет — выводим предупреждение
     if (audio.paused) {
-        alert('Сначала запустите воспроизведение радио!');
+        alert('Сначала включите радио кнопкой Play на плеере!');
         return;
     }
 
@@ -31,16 +46,10 @@ recordBtn.addEventListener('click', async () => {
         try {
             audioChunks = [];
             
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                if (audioContext.state === 'suspended') await audioContext.resume();
-                
-                source = audioContext.createMediaElementSource(audio);
-                streamDest = audioContext.createMediaStreamDestination();
-                source.connect(streamDest);
-                source.connect(audioContext.destination);
-            }
+            // Активируем аудио-контекст
+            await initAudio();
 
+            // Выбираем формат, который точно поддерживает браузер
             const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/aac';
             mediaRecorder = new MediaRecorder(streamDest.stream, { mimeType });
             
@@ -49,20 +58,23 @@ recordBtn.addEventListener('click', async () => {
             };
 
             mediaRecorder.onstop = () => {
+                // Изменяем текст на кнопке на время загрузки
                 btnText.textContent = 'Сохранение на GitHub...';
                 btnDot.textContent = '⏳';
 
                 const audioBlob = new Blob(audioChunks, { type: mimeType });
                 const ext = mimeType.includes('webm') ? 'webm' : 'aac';
                 
+                // Формируем красивое имя файла по дате
                 const now = new Date();
                 const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}`;
                 const fileName = `radio_record-${dateStr}.${ext}`;
 
+                // Читаем файл в Base64 для отправки через API GitHub
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = async () => {
-                    const base64Data = reader.result.split(',');
+                    const base64Data = reader.result.split(',')[1]; // Берем чистые данные без заголовка
                     const url = `https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
                     
                     try {
@@ -73,20 +85,23 @@ recordBtn.addEventListener('click', async () => {
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                message: `Запись радио: ${fileName}`,
+                                message: `Запись радио эфира: ${fileName}`,
                                 content: base64Data
                             })
                         });
 
                         if (response.ok) {
-                            alert(`Успешно! Файл добавлен в папку ${FOLDER_NAME}/${fileName}`);
+                            alert(`Успешно сохранен в папку: ${FOLDER_NAME}/${fileName}`);
                         } else {
-                            alert('Ошибка сохранения. Проверьте настройки репозитория.');
+                            const errData = await response.json();
+                            console.error('Ошибка API:', errData);
+                            alert('GitHub отклонил файл. Проверьте права токена.');
                         }
                     } catch (uploadErr) {
-                        console.error(uploadErr);
+                        console.error('Ошибка сети:', uploadErr);
                         alert('Сетевая ошибка при отправке файла на GitHub.');
                     } finally {
+                        // Возвращаем кнопку в исходный вид
                         btnText.textContent = 'Записать эфир';
                         btnDot.textContent = '🔴';
                     }
@@ -99,11 +114,13 @@ recordBtn.addEventListener('click', async () => {
             btnText.textContent = 'Остановить и сохранить';
             btnDot.textContent = '⏹️';
         } catch (err) {
-            console.error('Ошибка записи:', err);
-            alert('Не удалось начать запись.');
+            console.error('Критическая ошибка:', err);
+            alert('Не удалось запустить запись. Откройте вкладку Console для деталей.');
         }
     } else {
-        mediaRecorder.stop();
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+            mediaRecorder.stop();
+        }
         isRecording = false;
         recordBtn.classList.remove('recording');
     }
