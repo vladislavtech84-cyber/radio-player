@@ -1,10 +1,4 @@
-// Разрезаем токен на две части, чтобы обойти автоматическую блокировку на GitHub
-const tokenPart1 = 'ghp_O5OcihYCubi6aPMt';
-const tokenPart2 = 'CciJ7BUqKX5zQF3Zcj7K';
-
-// Склеиваем токен прямо в памяти браузера
-const GITHUB_TOKEN = tokenPart1 + tokenPart2; 
-
+// В исходном коде больше нет токена — GitHub его не заблокирует!
 const REPO_OWNER = 'vladislavtech84-cyber';
 const REPO_NAME = 'radio-player';
 const FOLDER_NAME = 'records'; 
@@ -36,7 +30,18 @@ async function initAudio() {
 }
 
 recordBtn.addEventListener('click', async () => {
-    // Проверяем, играет ли радио. Если нет — выводим предупреждение
+    // 1. Проверяем токен в памяти браузера. Если его нет — запрашиваем у пользователя
+    let savedToken = localStorage.getItem('my_github_token');
+    if (!savedToken) {
+        savedToken = prompt('Пожалуйста, введите ваш токен GitHub (начинается на ghp_):');
+        if (!savedToken || !savedToken.startsWith('ghp_')) {
+            alert('Без правильного токена запись не сможет сохраниться!');
+            return;
+        }
+        localStorage.setItem('my_github_token', savedToken); // Сохраняем в браузере
+    }
+
+    // Проверяем, играет ли радио
     if (audio.paused) {
         alert('Сначала включите радио кнопкой Play на плеере!');
         return;
@@ -45,11 +50,8 @@ recordBtn.addEventListener('click', async () => {
     if (!isRecording) {
         try {
             audioChunks = [];
-            
-            // Активируем аудио-контекст
             await initAudio();
 
-            // Выбираем формат, который точно поддерживает браузер
             const mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/aac';
             mediaRecorder = new MediaRecorder(streamDest.stream, { mimeType });
             
@@ -58,30 +60,27 @@ recordBtn.addEventListener('click', async () => {
             };
 
             mediaRecorder.onstop = () => {
-                // Изменяем текст на кнопке на время загрузки
                 btnText.textContent = 'Сохранение на GitHub...';
                 btnDot.textContent = '⏳';
 
                 const audioBlob = new Blob(audioChunks, { type: mimeType });
                 const ext = mimeType.includes('webm') ? 'webm' : 'aac';
                 
-                // Формируем красивое имя файла по дате
                 const now = new Date();
                 const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}`;
                 const fileName = `radio_record-${dateStr}.${ext}`;
 
-                // Читаем файл в Base64 для отправки через API GitHub
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = async () => {
-                    const base64Data = reader.result.split(',')[1]; // Берем чистые данные без заголовка
+                    const base64Data = reader.result.split(',')[1]; 
                     const url = `https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
                     
                     try {
                         const response = await fetch(url, {
                             method: 'PUT',
                             headers: {
-                                'Authorization': `token ${GITHUB_TOKEN}`,
+                                'Authorization': `token ${savedToken}`, // Используем токен из памяти браузера
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -95,13 +94,17 @@ recordBtn.addEventListener('click', async () => {
                         } else {
                             const errData = await response.json();
                             console.error('Ошибка API:', errData);
-                            alert('GitHub отклонил файл. Проверьте права токена.');
+                            if (response.status === 401 || response.status === 403) {
+                                alert('Ошибка авторизации! Токен неверный или был заблокирован. Мы сбросим его, попробуйте нажать кнопку еще раз.');
+                                localStorage.removeItem('my_github_token'); // Сбрасываем плохой токен
+                            } else {
+                                alert('GitHub отклонил файл. Проверьте настройки репозитория.');
+                            }
                         }
                     } catch (uploadErr) {
                         console.error('Ошибка сети:', uploadErr);
                         alert('Сетевая ошибка при отправке файла на GitHub.');
                     } finally {
-                        // Возвращаем кнопку в исходный вид
                         btnText.textContent = 'Записать эфир';
                         btnDot.textContent = '🔴';
                     }
@@ -115,7 +118,7 @@ recordBtn.addEventListener('click', async () => {
             btnDot.textContent = '⏹️';
         } catch (err) {
             console.error('Критическая ошибка:', err);
-            alert('Не удалось запустить запись. Откройте вкладку Console для деталей.');
+            alert('Не удалось запустить запись. Откройте Console для деталей.');
         }
     } else {
         if (mediaRecorder && mediaRecorder.state !== 'inactive') {
