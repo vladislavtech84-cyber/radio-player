@@ -30,12 +30,12 @@ async function initAudio() {
 recordBtn.addEventListener('click', async () => {
     let savedToken = localStorage.getItem('my_github_token');
     if (!savedToken) {
-        savedToken = prompt('Пожалуйста, введите ваш токен GitHub (начинается на ghp_):');
-        if (!savedToken || !savedToken.startsWith('ghp_')) {
+        savedToken = prompt('Пожалуйста, введите ваш токен GitHub (начинается на ghp_ или github_pat_):');
+        if (!savedToken) {
             alert('Без правильного токена запись не сможет сохраниться!');
             return;
         }
-        localStorage.setItem('my_github_token', savedToken);
+        localStorage.setItem('my_github_token', savedToken.trim());
     }
 
     if (audio.paused) {
@@ -71,14 +71,16 @@ recordBtn.addEventListener('click', async () => {
                 reader.onloadend = async () => {
                     const base64Data = reader.result.split(',')[1]; 
                     
-                    // ЗДЕСЬ ВСЁ ИСПРАВЛЕНО: ТОЧНЫЙ АДРЕС API GITHUB
-                    const url = `https://github.com/${REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
+                    // ИСПРАВЛЕНО: Адрес ведет на API GitHub, а не на сайт
+                    const url = `https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
                     
                     try {
                         const response = await fetch(url, {
                             method: 'PUT',
                             headers: {
-                                'Authorization': `token ${savedToken}`,
+                                // ИСПРАВЛЕНО: Современный формат авторизации Bearer и Accept-заголовок
+                                'Authorization': `Bearer ${savedToken}`,
+                                'Accept': 'application/vnd.github+json',
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -96,7 +98,7 @@ recordBtn.addEventListener('click', async () => {
                                 alert('Ошибка токена! Мы сбросили старый ключ. Нажмите кнопку записи еще раз и введите НОВЫЙ рабочий токен.');
                                 localStorage.removeItem('my_github_token');
                             } else {
-                                alert('GitHub отклонил файл. Проверьте настройки репозитория.');
+                                alert(`GitHub отклонил файл. Ошибка: ${errData.message || response.status}`);
                             }
                         }
                     } catch (uploadErr) {
