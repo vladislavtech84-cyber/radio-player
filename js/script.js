@@ -1,7 +1,3 @@
-const REPO_OWNER = 'vladislavtech84-cyber';
-const REPO_NAME = 'radio-player';
-const FOLDER_NAME = 'records'; 
-
 const audio = document.getElementById('radio');
 const recordBtn = document.getElementById('record-btn');
 const btnText = document.getElementById('text');
@@ -63,34 +59,39 @@ recordBtn.addEventListener('click', async () => {
                 const ext = mimeType.includes('webm') ? 'webm' : 'aac';
                 
                 const now = new Date();
-                const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}-${String(now.getSeconds()).padStart(2,'0')}`;
-                const fileName = `radio_record-${dateStr}.${ext}`;
+                const dateStr = now.getFullYear() + '-' + 
+                                String(now.getMonth()+1).padStart(2,'0') + '-' + 
+                                String(now.getDate()).padStart(2,'0') + '_' + 
+                                String(now.getHours()).padStart(2,'0') + '-' + 
+                                String(now.getMinutes()).padStart(2,'0') + '-' + 
+                                String(now.getSeconds()).padStart(2,'0');
+                                
+                const fileName = 'radio_record-' + dateStr + '.' + ext;
 
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = async () => {
-                    // ИСПРАВЛЕНО: берем, чтобы получить чистую строку Base64 без префикса метаданных
                     const base64Data = reader.result.split(',')[1]; 
                     
-                    // ИСПРАВЛЕНО: Абсолютно точный, прямой и рабочий адрес API GitHub без переменных
-                    const url = `https://github.com{FOLDER_NAME}/${fileName}`;
+                    // Абсолютный и прямой адрес API без использования переменных и бэктиков
+                    const url = 'https://github.com' + fileName;
                     
                     try {
                         const response = await fetch(url, {
                             method: 'PUT',
                             headers: {
-                                'Authorization': `Bearer ${savedToken}`,
+                                'Authorization': 'Bearer ' + savedToken,
                                 'Accept': 'application/vnd.github+json',
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
-                                message: `Запись радио эфира: ${fileName}`,
-                                content: base64Data // Теперь сюда передается корректная строка
+                                message: 'Запись радио эфира: ' + fileName,
+                                content: base64Data
                             })
                         });
 
                         if (response.ok) {
-                            alert(`Успешно сохранен в папку: ${FOLDER_NAME}/${fileName}`);
+                            alert('Успешно сохранен в папку: records/' + fileName);
                         } else {
                             const errData = await response.json();
                             console.error('Ошибка API:', errData);
@@ -98,7 +99,7 @@ recordBtn.addEventListener('click', async () => {
                                 alert('Ошибка токена! Мы сбросили старый ключ. Нажмите кнопку записи еще раз и введите НОВЫЙ рабочий токен.');
                                 localStorage.removeItem('my_github_token');
                             } else {
-                                alert(`GitHub отклонил файл. Ошибка: ${errData.message || response.status}`);
+                                alert('GitHub отклонил файл. Ошибка: ' + (errData.message || response.status));
                             }
                         }
                     } catch (uploadErr) {
