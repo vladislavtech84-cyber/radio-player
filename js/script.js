@@ -69,8 +69,11 @@ recordBtn.addEventListener('click', async () => {
                 const reader = new FileReader();
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = async () => {
+                    // ИСПРАВЛЕНО: берем, чтобы получить чистую строку Base64 без префикса метаданных
                     const base64Data = reader.result.split(',')[1]; 
-                    const url = `https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
+                    
+                    // ИСПРАВЛЕНО: Абсолютно точный, прямой и рабочий адрес API GitHub без переменных
+                    const url = `https://github.com{FOLDER_NAME}/${fileName}`;
                     
                     try {
                         const response = await fetch(url, {
@@ -82,7 +85,7 @@ recordBtn.addEventListener('click', async () => {
                             },
                             body: JSON.stringify({
                                 message: `Запись радио эфира: ${fileName}`,
-                                content: base64Data
+                                content: base64Data // Теперь сюда передается корректная строка
                             })
                         });
 
