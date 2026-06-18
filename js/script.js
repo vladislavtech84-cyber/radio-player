@@ -70,15 +70,12 @@ recordBtn.addEventListener('click', async () => {
                 reader.readAsDataURL(audioBlob);
                 reader.onloadend = async () => {
                     const base64Data = reader.result.split(',')[1]; 
-                    
-                    // ИСПРАВЛЕНО: Адрес ведет на API GitHub, а не на сайт
                     const url = `https://github.com{REPO_OWNER}/${REPO_NAME}/contents/${FOLDER_NAME}/${fileName}`;
                     
                     try {
                         const response = await fetch(url, {
                             method: 'PUT',
                             headers: {
-                                // ИСПРАВЛЕНО: Современный формат авторизации Bearer и Accept-заголовок
                                 'Authorization': `Bearer ${savedToken}`,
                                 'Accept': 'application/vnd.github+json',
                                 'Content-Type': 'application/json'
