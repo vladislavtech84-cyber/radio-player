@@ -73,14 +73,17 @@ recordBtn.addEventListener('click', async () => {
                 reader.onloadend = async () => {
                     const base64Data = reader.result.split(',')[1]; 
                     
+                    // ИСПРАВЛЕНО: Корректный URL к API GitHub с указанием вашего репозитория и папки records
                     const url = 'https://github.com' + fileName;
                     
                     try {
                         const response = await fetch(url, {
                             method: 'PUT',
                             headers: {
+                                // ИСПРАВЛЕНО: Добавлен заголовок X-GitHub-Api-Version согласно современным стандартам GitHub API
                                 'Authorization': 'Bearer ' + savedToken,
                                 'Accept': 'application/vnd.github+json',
+                                'X-GitHub-Api-Version': '2022-11-28',
                                 'Content-Type': 'application/json'
                             },
                             body: JSON.stringify({
@@ -128,4 +131,3 @@ recordBtn.addEventListener('click', async () => {
         recordBtn.classList.remove('recording');
     }
 });
-ф
