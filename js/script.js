@@ -73,7 +73,6 @@ recordBtn.addEventListener('click', async () => {
                 reader.onloadend = async () => {
                     const base64Data = reader.result.split(',')[1]; 
                     
-                    // Абсолютный и прямой адрес API без использования переменных и бэктиков
                     const url = 'https://github.com' + fileName;
                     
                     try {
