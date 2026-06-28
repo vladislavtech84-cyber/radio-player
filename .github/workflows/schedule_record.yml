@@ -2,9 +2,33 @@ name: Radio Timer Recorder and Auto-Clean
 
 on:
   schedule:
-    # Робот запускается в 8,10,12,14,16,18,20,22 по Москве (минус 3 часа для UTC)
+    # Автоматический фоновый будильник (каждые 2 часа с 8:00 до 22:00 по Москве)
     - cron: '0 5,7,9,11,13,15,17,19 * * *'
-  workflow_dispatch: # Кнопка ручного запуска в Actions
+  
+  # ЭТОТ БЛОК СОЗДАЕТ ГРАФИЧЕСКИЕ НАСТРОЙКИ В ИНТЕРФЕЙСЕ GITHUB
+  workflow_dispatch:
+    inputs:
+      duration_minutes:
+        description: 'Длительность записи (в минутах)'
+        required: true
+        default: '60'
+        type: choice
+        options:
+          - '5'
+          - '15'
+          - '30'
+          - '60'
+          - '120'
+      start_delay:
+        description: 'Отложить запуск записи? (в минутах)'
+        required: true
+        default: '0'
+        type: choice
+        options:
+          - '0'
+          - '10'
+          - '30'
+          - '60'
 
 jobs:
   record_and_clean:
@@ -15,35 +39,48 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # Полная история для корректного удаления файлов
+        fetch-depth: 0
 
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
+    # Графическая настройка: если вы выбрали отложить старт, робот подождет перед записью
+    - name: Wait if delay requested
+      if: "${{ github.event.inputs.start_delay != '' && github.event.inputs.start_delay != '0' }}"
+      run: |
+        echo "Откладываем запуск на ${{ github.event.inputs.start_delay }} минут..."
+        sleep $(( ${{ github.event.inputs.start_delay }} * 60 ))
+
+    # Передаем выбранную вами на сайте длительность напрямую в Python-скрипт
     - name: Run Recorder Script
-      run: python record.py
+      run: |
+        if [ "${{ github.event.inputs.duration_minutes }}" != "" ]; then
+          # Вычисляем секунды из выбранных на сайте минут
+          SECONDS_TO_RECORD=$(( ${{ github.event.inputs.duration_minutes }} * 60 ))
+          echo "Запуск записи из графической панели на $SECONDS_TO_RECORD секунд."
+          
+          # Временно подменяем длительность в скрипте без изменения самого файла
+          sed -i "s/RECORD_DURATION = .*/RECORD_DURATION = $SECONDS_TO_RECORD/g" record.py
+        fi
+        python record.py
 
     - name: Auto-Clean Old Files (Older than 24 hours)
       run: |
         python -c '
         import os, time
         now = time.time()
-        cutoff = now - (24 * 3600) # Граница: 24 часа назад
-        
+        cutoff = now - (24 * 3600)
         for f in os.listdir("."):
             if f.startswith("record_") and f.endswith(".mp3"):
                 try:
-                    # Корректно извлекаем timestamp времени из имени файла record_12345678.mp3
                     timestamp_part = f.replace("record_", "").replace(".mp3", "")
-                    file_time = int(timestamp_part)
-                    
-                    if file_time < cutoff:
+                    if int(timestamp_part) < cutoff:
                         os.remove(f)
-                        print(f"Старый файл удален автоматически: {f}")
-                except Exception as e:
-                    print(f"Ошибка при анализе файла {f}: {e}")
+                        print(f"Удален старый файл: {f}")
+                except:
+                    pass
         '
 
     - name: Commit and Push Changes
@@ -51,6 +88,5 @@ jobs:
         git config --global user.name "GitHub Actions"
         git config --global user.email "actions@github.com"
         git add *.mp3
-        # Фиксируем изменения, если добавились новые файлы или удалились старые через сутки
         git commit -m "Автоматическая запись радио и очистка старого архива" || exit 0
         git push
