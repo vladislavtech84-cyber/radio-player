@@ -3,78 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ТЕСТ: Ночной архив</title>
+    <title>СУПЕР-ТЕСТ: Эфир и Запись</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 500px; width: 100%; background: #222; padding: 30px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.7); text-align: center; margin-top: 40px; }
-        .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; background: #00bcff; color: #fff; }
-        audio { width: 100%; margin-top: 15px; border-radius: 8px; }
-        .track-info { margin-top: 15px; font-size: 16px; color: #bbb; font-weight: 500; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a1a; color: #ffffff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 600px; width: 100%; background: #2d2d2d; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; }
+        h1, h2 { text-align: center; color: #00ff99; }
+        .player-section { margin-bottom: 30px; text-align: center; border-bottom: 1px solid #444; padding-bottom: 20px; }
+        audio { width: 100%; margin-top: 10px; border-radius: 8px; }
+        .status-badge { display: inline-block; padding: 8px 18px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 15px; background: #00ff99; color: #000; transition: 0.3s; }
+        .recording-badge { background: #ff4444; color: #fff; }
+        .track-item { background: #3d3d3d; padding: 12px; margin-top: 10px; border-radius: 8px; text-align: left; }
+        .track-name { font-weight: bold; color: #00bcff; font-size: 13px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="mode-badge" class="status-badge">🌙 ВРЕМЕННЫЙ ТЕСТ АРХИВА</div>
-    <h1 id="main-title">Ночной архив программ</h1>
-    <audio id="global-player" controls autoplay></audio>
-    <div id="current-track-name" class="track-info">Сканирование файлов...</div>
+    <div id="mode-badge" class="status-badge">☀️ ПРЯМОЙ ЭФИР АКТИВЕН</div>
+    
+    <!-- ГЛАВНЫЙ ПЛЕЕР -->
+    <div class="player-section">
+        <h1 id="main-title">Прямой эфир радио</h1>
+        <audio id="global-player" controls autoplay src="https://5-tv.ru"></audio> 
+        <div id="current-status" style="margin-top: 10px; color: #bbb;">Вы слушаете радио Петербург онлайн...</div>
+    </div>
+
+    <!-- АРХИВ ТЕСТОВЫХ МИНУТ -->
+    <div>
+        <h2>📁 Созданные минутные записи</h2>
+        <div id="archive-list">Сканирование хранилища...</div>
+    </div>
 </div>
 
 <script>
     const player = document.getElementById('global-player');
-    const trackName = document.getElementById('current-track-name');
-    let nightPlaylist = [];
-    let currentTrackIndex = 0;
+    const badge = document.getElementById('mode-badge');
+    const title = document.getElementById('main-title');
+    const statusText = document.getElementById('current-status');
+    const archiveList = document.getElementById('archive-list');
 
-    async function fetchNightPlaylist() {
+    const LIVE_STREAM = "https://5-tv.ru";
+    let isRecordingNow = false;
+
+    // Функция проверяет репозиторий и выводит созданные минутные файлы
+    async function updateSystem() {
         const url = "https://github.com" + new Date().getTime();
         try {
             const response = await fetch(url);
             if (!response.ok) return;
             const files = await response.json();
+            
+            // Ищем минутные mp3
             let mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
-            
-            // Сортируем от старых к новым
-            mp3Files.sort((a, b) => a.name.localeCompare(b.name));
-            
-            const newUrls = mp3Files.map(file => file.download_url);
-            
-            // Если появились новые файлы, обновляем плейлист в реальном времени
-            if (JSON.stringify(newUrls) !== JSON.stringify(nightPlaylist)) {
-                nightPlaylist = newUrls;
-                if (player.paused && nightPlaylist.length > 0) {
-                    currentTrackIndex = nightPlaylist.length - 1; // Включаем самый свежий тестовый файл
-                    playNightTrack(currentTrackIndex);
-                }
+            mp3Files.sort((a, b) => b.name.localeCompare(a.name)); // Свежие файлы сверху
+
+            // Выводим архив на экран ниже основного плеера
+            if (mp3Files.length === 0) {
+                archiveList.innerHTML = "<p style='color:#888;'>Записей еще нет, ждем 22:30...</p>";
+            } else {
+                archiveList.innerHTML = "";
+                mp3Files.forEach((file, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'track-item';
+                    div.innerHTML = `
+                        <div class="track-name">▶️ Минутный тест №${mp3Files.length - index}</div>
+                        <audio controls preload="none" src="${file.download_url}"></audio>
+                    `;
+                    archiveList.appendChild(div);
+                });
             }
-            
-            if (nightPlaylist.length === 0) {
-                trackName.innerText = "Ожидание первой минутной записи от таймера Гитхаба...";
+
+            // ХИТРАЯ ПРОВЕРКА: Проверяем, идет ли запись прямо сейчас через статус API Actions
+            const actionsUrl = "https://github.com";
+            const actionsResp = await fetch(actionsUrl);
+            if (actionsResp.ok) {
+                const actionsData = await actionsResp.json();
+                if (actionsData.workflow_runs.length > 0) {
+                    const latestRun = actionsData.workflow_runs[0];
+                    
+                    // Если статус робота "в процессе" (пишет файл прямо сейчас)
+                    if (latestRun.status === "queued" || latestRun.status === "in_progress") {
+                        if (!isRecordingNow) {
+                            isRecordingNow = true;
+                            badge.innerText = "🔴 ИДЕТ ЗАПИСЬ НА ГИТХАБЕ";
+                            badge.className = "status-badge recording-badge";
+                            title.innerText = "Система записывает поток...";
+                            statusText.innerText = "Прямой эфир временно уступил место записи файла.";
+                        }
+                    } else {
+                        // Если робот закончил или спит — возвращаем ЖИВОЙ ПРЯМОЙ ЭФИР
+                        if (isRecordingNow || player.src !== LIVE_STREAM) {
+                            isRecordingNow = false;
+                            badge.innerText = "☀️ ПРЯМОЙ ЭФИР АКТИВЕН";
+                            badge.className = "status-badge";
+                            title.innerText = "Прямой эфир радио";
+                            statusText.innerText = "Вы слушаете радио Петербург онлайн...";
+                            player.src = LIVE_STREAM;
+                            player.load();
+                        }
+                    }
+                }
             }
         } catch (e) { console.error(e); }
     }
 
-    function playNightTrack(index) {
-        if (index < nightPlaylist.length) {
-            trackName.innerText = `Играет минутный тест №${index + 1} из ${nightPlaylist.length}`;
-            player.src = nightPlaylist[index];
-            player.load();
-            player.play().catch(e => console.log("Нажмите на плеер для активации звука"));
-        } else {
-            currentTrackIndex = 0;
-            playNightTrack(0);
-        }
-    }
-
-    player.onended = function() {
-        currentTrackIndex++;
-        playNightTrack(currentTrackIndex);
-    };
-
-    // Проверяем новые файлы каждые 15 секунд для быстрого теста
-    setInterval(fetchNightPlaylist, 15000);
-    fetchNightPlaylist();
+    // Опрашиваем систему каждые 5 секунд для мгновенной реакции на тесты
+    setInterval(updateSystem, 5000);
+    updateSystem();
 </script>
 
 </body>
