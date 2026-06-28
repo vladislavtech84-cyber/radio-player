@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ТЕСТ: День и Ночь</title>
+    <title>Радиоплеер: День и Ночь</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { max-width: 500px; width: 100%; background: #222; padding: 30px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.7); text-align: center; margin-top: 40px; }
@@ -19,7 +19,10 @@
 <div class="container">
     <div id="mode-badge" class="status-badge day-mode">☀️ ДНЕВНОЙ ЭФИР</div>
     <h1 id="main-title">Прямой эфир радио</h1>
-    <audio id="global-player" controls autoplay></audio>
+    
+    <!-- Главный плеер, куда всегда вшита ваша ссылка -->
+    <audio id="global-player" controls autoplay src="https://radio.5-tv.ru/radio.mp3"></audio>
+    
     <div id="current-track-name" class="track-info">Загрузка эфира...</div>
 </div>
 
@@ -29,27 +32,41 @@
     const title = document.getElementById('main-title');
     const trackName = document.getElementById('current-track-name');
 
+    // Ваша неизменяемая ссылка на радиопоток
     const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3";
     let nightPlaylist = [];
     let currentTrackIndex = 0;
 
+    // Функция автоматически считывает репозиторий и находит ваши файлы mp3
     async function fetchNightPlaylist() {
-        const url = "https://github.com";
+        const url = "https://github.com" + new Date().getTime();
         try {
             const response = await fetch(url);
             if (!response.ok) return;
             const files = await response.json();
+            
+            // Отбираем файлы записей
             let mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
+            
+            // Сортируем их хронологически, чтобы они шли друг за другом по времени
             mp3Files.sort((a, b) => a.name.localeCompare(b.name));
-            if (mp3Files.length > 8) { mp3Files = mp3Files.slice(-8); }
+            
+            // Оставляем последние 8 файлов, записанных за день
+            if (mp3Files.length > 8) {
+                mp3Files = mp3Files.slice(-8);
+            }
+            
             nightPlaylist = mp3Files.map(file => file.download_url);
-        } catch (e) { console.error(e); }
+        } catch (e) {
+            console.error("Ошибка при получении списка файлов:", e);
+        }
     }
 
     async function checkTimeAndPlay() {
-        // ⚠️ ВМЕСТО РЕАЛЬНОГО ЧАСА ЖЕСТКО СТАВИМ 2 ЧАСА НОЧИ ДЛЯ ТЕСТА
-        const currentHour = 2; 
+        const now = new Date();
+        const currentHour = now.getHours();
 
+        // 🌙 НОЧНОЙ РЕЖИМ (с 00:00 ночи до 07:59 утра)
         if (currentHour >= 0 && currentHour < 8) {
             if (badge.innerText !== "🌙 НОЧНОЙ АРХИВ") {
                 badge.innerText = "🌙 НОЧНОЙ АРХИВ";
@@ -62,36 +79,57 @@
                     currentTrackIndex = 0;
                     playNightTrack(currentTrackIndex);
                 } else {
-                    trackName.innerText = "Файлы не найдены.";
+                    trackName.innerText = "Записи еще обновляются сервером. Включен прямой эфир.";
+                    if (player.src !== LIVE_STREAM) {
+                        player.src = LIVE_STREAM;
+                        player.load();
+                    }
                 }
+            }
+        } 
+        // ☀️ ДНЕВНОЙ РЕЖИМ (с 08:00 утра до 23:59 вечера)
+        else {
+            if (badge.innerText !== "☀️ ДНЕВНОЙ ЭФИР" || player.src !== LIVE_STREAM) {
+                badge.innerText = "☀️ ДНЕВНОЙ ЭФИР";
+                badge.className = "status-badge day-mode";
+                title.innerText = "Прямой эфир радио";
+                trackName.innerText = "Вы слушаете трансляцию в реальном времени";
+                
+                player.src = LIVE_STREAM;
+                player.load();
             }
         }
     }
 
+    // Функция запуска трека из ночного архива
     function playNightTrack(index) {
         if (index < nightPlaylist.length) {
             trackName.innerText = `Играет запись программы №${index + 1} из ${nightPlaylist.length}`;
             player.src = nightPlaylist[index];
             player.load();
-            player.play().catch(e => console.log(e));
-
-            // ⚠️ ТЕСТ: Через 5 секунд принудительно переключаем на следующий трек
-            setTimeout(() => {
-                player.dispatchEvent(new Event('ended'));
-            }, 5000);
-
+            player.play().catch(e => console.log("Кликните на плеер для воспроизведения"));
         } else {
-            trackName.innerText = "Все ночные программы успешно прослушаны! Перезапуск круга.";
+            // Если все 8 часов закончились, а 8 утра еще не наступило, крутим список заново
             currentTrackIndex = 0;
-            setTimeout(() => { playNightTrack(0); }, 3000);
+            playNightTrack(0);
         }
     }
 
+    // Когда очередной часовой файл доиграл до конца — автоматически включается следующий
     player.onended = function() {
-        currentTrackIndex++;
-        playNightTrack(currentTrackIndex);
+        const now = new Date();
+        const currentHour = now.getHours();
+
+        if (currentHour >= 0 && currentHour < 8) {
+            currentTrackIndex++;
+            playNightTrack(currentTrackIndex);
+        }
     };
 
+    // Проверяем время каждые 2 минуты, чтобы точно поймать полночь или утро
+    setInterval(checkTimeAndPlay, 120000);
+
+    // Первое автоматическое включение при открытии страницы
     checkTimeAndPlay();
 </script>
 
