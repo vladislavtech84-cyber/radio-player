@@ -19,7 +19,10 @@
 <div class="container">
     <div id="mode-badge" class="status-badge day-mode">☀️ ДНЕВНОЙ ЭФИР</div>
     <h1 id="main-title">Прямой эфир радио</h1>
+    
+    <!-- Зашита основная рабочая ссылка вещания Радио Петербург -->
     <audio id="global-player" controls autoplay src="https://5-tv.ru"></audio>
+    
     <div id="current-track-name" class="track-info">Загрузка эфира...</div>
 </div>
 
@@ -29,6 +32,7 @@
     const title = document.getElementById('main-title');
     const trackName = document.getElementById('current-track-name');
 
+    // Ссылка на Радио Петербург (Пятый канал)
     const LIVE_STREAM = "https://5-tv.ru";
     let nightPlaylist = [];
     let currentTrackIndex = 0;
@@ -50,6 +54,7 @@
         const now = new Date();
         const currentHour = now.getHours();
 
+        // 🌙 НОЧНОЙ РЕЖИМ (с 00:00 ночи до 07:59 утра)
         if (currentHour >= 0 && currentHour < 8) {
             if (badge.innerText !== "🌙 НОЧНОЙ АРХИВ") {
                 badge.innerText = "🌙 НОЧНОЙ АРХИВ";
@@ -60,18 +65,26 @@
                     currentTrackIndex = 0;
                     playNightTrack(currentTrackIndex);
                 } else {
-                    trackName.innerText = "Записи еще обновляются сервером. Включен прямой эфир.";
+                    trackName.innerText = "Записи еще обновляются. Включен прямой эфир.";
                     if (player.src !== LIVE_STREAM) { player.src = LIVE_STREAM; player.load(); }
                 }
             }
-        } else {
+        } 
+        // ☀️ ДНЕВНОЙ ЭФИР (с 08:00 утра до 23:59 вечера)
+        else {
             if (badge.innerText !== "☀️ ДНЕВНОЙ ЭФИР" || player.src !== LIVE_STREAM) {
                 badge.innerText = "☀️ ДНЕВНОЙ ЭФИР";
                 badge.className = "status-badge day-mode";
                 title.innerText = "Прямой эфир радио";
                 trackName.innerText = "Вы слушаете трансляцию в реальном времени";
+                
                 player.src = LIVE_STREAM;
                 player.load();
+                
+                // Исправление для современных браузеров, блокирующих автозапуск без клика
+                player.play().catch(() => {
+                    trackName.innerText = "⚠️ Нажмите кнопку PLAY на плеере для запуска звука";
+                });
             }
         }
     }
@@ -81,7 +94,9 @@
             trackName.innerText = `Играет запись программы №${index + 1} из ${nightPlaylist.length}`;
             player.src = nightPlaylist[index];
             player.load();
-            player.play().catch(e => console.log(e));
+            player.play().catch(e => {
+                trackName.innerText = "⚠️ Нажмите кнопку PLAY на плеере для запуска звука";
+            });
         } else {
             currentTrackIndex = 0;
             playNightTrack(0);
