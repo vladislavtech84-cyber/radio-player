@@ -6,97 +6,28 @@
     <title>Радиоплеер: День и Ночь</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 500px; width: 100%; background: #222; padding: 30px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.7); text-align: center; margin-top: 20px; }
+        .container { max-width: 500px; width: 100%; background: #222; padding: 30px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.7); text-align: center; margin-top: 40px; }
         .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; }
         .day-mode { background: #00ff99; color: #000; }
         .night-mode { background: #00bcff; color: #fff; }
         audio { width: 100%; margin-top: 15px; border-radius: 8px; }
         .track-info { margin-top: 15px; font-size: 16px; color: #bbb; font-weight: 500; }
-        
-        /* Стили графической панели управления */
-        .admin-panel { max-width: 500px; width: 100%; background: #2a2a2a; padding: 20px; border-radius: 16px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); box-sizing: border-box; }
-        .admin-title { font-size: 16px; color: #ffcc00; margin-bottom: 12px; font-weight: bold; text-align: center; }
-        input, button { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; box-sizing: border-box; font-size: 14px; }
-        input { background: #444; color: #fff; text-align: center; }
-        button { background: #ffcc00; color: #000; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        button:hover { background: #e6b800; transform: scale(1.02); }
-        #log { margin-top: 12px; font-size: 13px; color: #aaa; text-align: center; font-weight: 500; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="mode-badge" class="status-badge day-mode">☀️ ДНЕВНОЙ ЭФИР</div>
-    <h1>Прямой эфир радио</h1>
-    
-    <!-- Ваша постоянная ссылка на поток радио -->
+    <h1 id="main-title">Прямой эфир радио</h1>
     <audio id="global-player" controls autoplay src="https://5-tv.ru"></audio>
-    
     <div id="current-track-name" class="track-info">Загрузка эфира...</div>
-</div>
-
-<!-- ГРАФИЧЕСКАЯ ПАНЕЛЬ НАСТРОЙКИ ТАЙМЕРА -->
-<div class="admin-panel">
-    <div class="admin-title">⚙️ Графический пульт записи</div>
-    <input type="password" id="gh-token" placeholder="Вставьте скопированный GitHub Token сюда">
-    <button onclick="triggerImmediateRecord()">🔴 Запустить запись СЕЙЧАС (1 час)</button>
-    <div id="log">Токен сохранится в памяти вашего браузера на этом ПК.</div>
 </div>
 
 <script>
     const player = document.getElementById('global-player');
     const badge = document.getElementById('mode-badge');
+    const title = document.getElementById('main-title');
     const trackName = document.getElementById('current-track-name');
-    const tokenInput = document.getElementById('gh-token');
-    const logDiv = document.getElementById('log');
-
-    // Авто-загрузка токена из памяти браузера при открытии страницы
-    if (localStorage.getItem('gh_token')) {
-        tokenInput.value = localStorage.getItem('gh_token');
-    }
-
-    // Сохранение токена при вводе
-    tokenInput.oninput = () => {
-        localStorage.setItem('gh_token', tokenInput.value);
-    };
-
-    // Функция отправки команды на запуск робота
-    async function triggerImmediateRecord() {
-        const token = tokenInput.value;
-        if (!token) {
-            alert("Пожалуйста, сначала вставьте ваш GitHub Token в поле выше!");
-            return;
-        }
-
-        logDiv.innerText = "⏳ Отправка команды на GitHub...";
-        logDiv.style.color = "#ffcc00";
-        
-        const url = "https://github.com";
-        
-        try {
-            const response = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Authorization": `Bearer ${token}`,
-                    "Accept": "application/vnd.github+json",
-                    "X-GitHub-Api-Version": "2022-11-28"
-                },
-                body: JSON.stringify({ ref: "main" })
-            });
-
-            if (response.status === 204) {
-                logDiv.innerText = "🚀 Робот успешно запущен! Запись радио пошла.";
-                logDiv.style.color = "#00ff99";
-            } else {
-                const errData = await response.json();
-                logDiv.innerText = `❌ Ошибка: ${errData.message}`;
-                logDiv.style.color = "#ff4444";
-            }
-        } catch (e) {
-            logDiv.innerText = "❌ Ошибка соединения. Проверьте Токен.";
-            logDiv.style.color = "#ff4444";
-        }
-    }
 
     const LIVE_STREAM = "https://5-tv.ru";
     let nightPlaylist = [];
@@ -123,13 +54,13 @@
             if (badge.innerText !== "🌙 НОЧНОЙ АРХИВ") {
                 badge.innerText = "🌙 НОЧНОЙ АРХИВ";
                 badge.className = "status-badge night-mode";
-                document.querySelector('h1').innerText = "Ночной архив программ";
+                title.innerText = "Ночной архив программ";
                 await fetchNightPlaylist();
                 if (nightPlaylist.length > 0) {
                     currentTrackIndex = 0;
                     playNightTrack(currentTrackIndex);
                 } else {
-                    trackName.innerText = "Записи обновляются. Включен прямой эфир.";
+                    trackName.innerText = "Записи еще обновляются сервером. Включен прямой эфир.";
                     if (player.src !== LIVE_STREAM) { player.src = LIVE_STREAM; player.load(); }
                 }
             }
@@ -137,7 +68,7 @@
             if (badge.innerText !== "☀️ ДНЕВНОЙ ЭФИР" || player.src !== LIVE_STREAM) {
                 badge.innerText = "☀️ ДНЕВНОЙ ЭФИР";
                 badge.className = "status-badge day-mode";
-                document.querySelector('h1').innerText = "Прямой эфир радио";
+                title.innerText = "Прямой эфир радио";
                 trackName.innerText = "Вы слушаете трансляцию в реальном времени";
                 player.src = LIVE_STREAM;
                 player.load();
