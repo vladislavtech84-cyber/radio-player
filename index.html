@@ -3,125 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер: День и Ночь</title>
+    <title>ТЕСТ: Ночной архив</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a1a; color: #ffffff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { max-width: 600px; width: 100%; background: #2d2d2d; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); text-align: center; }
-        h1, h2 { text-align: center; color: #00ff99; }
-        .player-section { margin-bottom: 40px; text-align: center; border-bottom: 1px solid #444; padding-bottom: 20px; }
-        audio { width: 100%; margin-top: 10px; border-radius: 8px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 500px; width: 100%; background: #222; padding: 30px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.7); text-align: center; margin-top: 40px; }
+        .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 20px; background: #00bcff; color: #fff; }
+        audio { width: 100%; margin-top: 15px; border-radius: 8px; }
         .track-info { margin-top: 15px; font-size: 16px; color: #bbb; font-weight: 500; }
-        .status-badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: bold; margin-bottom: 10px; background: #00ff99; color: #000; }
-        .night-badge { background: #00bcff; color: #fff; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="mode-badge" class="status-badge">☀️ ДНЕВНОЙ ЭФИР</div>
-    
-    <!-- СЕКЦИЯ ПРЯМОГО ЭФИРА -->
-    <div class="player-section">
-        <h1 id="main-title">Прямой эфир радио</h1>
-        <audio id="global-player" controls autoplay src="https://radio.5-tv.ru/radio.mp3"></audio> 
-        <div id="current-track-name" class="track-info">Вы слушаете трансляцию в реальном времени</div>
-    </div>
+    <div id="mode-badge" class="status-badge">🌙 ВРЕМЕННЫЙ ТЕСТ АРХИВА</div>
+    <h1 id="main-title">Ночной архив программ</h1>
+    <audio id="global-player" controls autoplay></audio>
+    <div id="current-track-name" class="track-info">Сканирование файлов...</div>
 </div>
 
 <script>
     const player = document.getElementById('global-player');
-    const badge = document.getElementById('mode-badge');
-    const title = document.getElementById('main-title');
     const trackName = document.getElementById('current-track-name');
-
-    const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3";
     let nightPlaylist = [];
     let currentTrackIndex = 0;
 
-    // Автоматический поиск файлов в вашем репозитории
     async function fetchNightPlaylist() {
         const url = "https://github.com" + new Date().getTime();
         try {
             const response = await fetch(url);
             if (!response.ok) return;
             const files = await response.json();
-            
-            // Находим только MP3 записи
             let mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
             
-            // Сортируем от старых к новым, чтобы они шли строго по порядку времени
+            // Сортируем от старых к новым
             mp3Files.sort((a, b) => a.name.localeCompare(b.name));
             
-            // Сохраняем ссылки для ночного воспроизведения
-            nightPlaylist = mp3Files.map(file => file.download_url);
-        } catch (e) {
-            console.error("Ошибка обновления списка архива:", e);
-        }
-    }
-
-    async function checkTimeAndPlay() {
-        const now = new Date();
-        const currentHour = now.getHours();
-
-        // 🌙 НОЧНОЙ РЕЖИМ: с 00:00 ночи до 07:59 утра
-        if (currentHour >= 0 && currentHour < 8) {
-            if (badge.innerText !== "🌙 НОЧНОЙ АРХИВ") {
-                badge.innerText = "🌙 НОЧНОЙ АРХИВ";
-                badge.className = "status-badge night-badge";
-                title.innerText = "Ночной архив программ";
-                
-                await fetchNightPlaylist();
-                
-                if (nightPlaylist.length > 0) {
-                    currentTrackIndex = 0;
+            const newUrls = mp3Files.map(file => file.download_url);
+            
+            // Если появились новые файлы, обновляем плейлист в реальном времени
+            if (JSON.stringify(newUrls) !== JSON.stringify(nightPlaylist)) {
+                nightPlaylist = newUrls;
+                if (player.paused && nightPlaylist.length > 0) {
+                    currentTrackIndex = nightPlaylist.length - 1; // Включаем самый свежий тестовый файл
                     playNightTrack(currentTrackIndex);
-                } else {
-                    trackName.innerText = "Свежие ночные записи подгружаются... Играет эфир.";
-                    if (player.src !== LIVE_STREAM) { player.src = LIVE_STREAM; player.load(); }
                 }
             }
-        } 
-        // ☀️ ДНЕВНОЙ РЕЖИМ: с 08:00 утра до 23:59 вечера
-        else {
-            if (badge.innerText !== "☀️ ДНЕВНОЙ ЭФИР" || player.src !== LIVE_STREAM) {
-                badge.innerText = "☀️ ДНЕВНОЙ ЭФИР";
-                badge.className = "status-badge";
-                title.innerText = "Прямой эфир радио";
-                trackName.innerText = "Вы слушаете трансляцию в реальном времени";
-                
-                player.src = LIVE_STREAM;
-                player.load();
+            
+            if (nightPlaylist.length === 0) {
+                trackName.innerText = "Ожидание первой минутной записи от таймера Гитхаба...";
             }
-        }
+        } catch (e) { console.error(e); }
     }
 
     function playNightTrack(index) {
         if (index < nightPlaylist.length) {
-            trackName.innerText = `Играет запись программы №${index + 1} из ${nightPlaylist.length}`;
+            trackName.innerText = `Играет минутный тест №${index + 1} из ${nightPlaylist.length}`;
             player.src = nightPlaylist[index];
             player.load();
-            player.play().catch(e => console.log("Ожидание клика пользователя"));
+            player.play().catch(e => console.log("Нажмите на плеер для активации звука"));
         } else {
-            // Если проиграли все накопленные за день часы, запускаем круг заново до 8 утра
             currentTrackIndex = 0;
             playNightTrack(0);
         }
     }
 
-    // Автоматическое переключение на следующий час, когда закончился текущий трек
     player.onended = function() {
-        const now = new Date();
-        const currentHour = now.getHours();
-
-        if (currentHour >= 0 && currentHour < 8) {
-            currentTrackIndex++;
-            playNightTrack(currentTrackIndex);
-        }
+        currentTrackIndex++;
+        playNightTrack(currentTrackIndex);
     };
 
-    // Проверяем часы каждые 2 минуты
-    setInterval(checkTimeAndPlay, 120000);
-    checkTimeAndPlay();
+    // Проверяем новые файлы каждые 15 секунд для быстрого теста
+    setInterval(fetchNightPlaylist, 15000);
+    fetchNightPlaylist();
 </script>
 
 </body>
