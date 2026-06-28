@@ -2,8 +2,8 @@ name: Radio Timer Recorder and Auto-Clean
 
 on:
   schedule:
-    # ТЕСТ: Робот будет просыпаться КАЖДУЮ МИНУТУ, начиная с 19:30 по UTC (22:30 по Москве)
-    - cron: '* 19 * * *'
+    # Старт в 22:45 по Москве (19:35 UTC) и запуск каждую следующую минуту
+    - cron: '35/1 19 * * *'
   workflow_dispatch:
 
 jobs:
@@ -25,13 +25,12 @@ jobs:
     - name: Run Recorder Script
       run: python record.py
 
-    # ТЕСТ ОЧИСТКИ: Удаляем файлы, которые старше 3 минут, чтобы увидеть авто-очистку прямо сейчас!
     - name: Auto-Clean Old Files (Older than 3 minutes)
       run: |
         python -c '
         import os, time
         now = time.time()
-        cutoff = now - 180 # 3 минуты в секундах
+        cutoff = now - 180
         for f in os.listdir("."):
             if f.startswith("record_") and f.endswith(".mp3"):
                 try:
