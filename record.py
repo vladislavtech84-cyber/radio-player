@@ -1,12 +1,12 @@
-import urllib.request
+pythonimport urllib.request
 import time
 import sys
 
 # ⚠️ ВСТАВЬТЕ ССЫЛКУ НА ВАШ ПОТОК НИЖЕ ВМЕСТО "ССЫЛКА_НА_ВАШЕ_РАДИО"
 STREAM_URL = "ССЫЛКА_НА_ВАШЕ_РАДИО" 
 
-# Длительность записи в секундах (например, 3600 — это 1 час, 1800 — 30 минут)
-RECORD_DURATION = 1800 
+# Длительность записи выставлена на 1 час (3600 секунд)
+RECORD_DURATION = 3600 
 
 OUTPUT_FILE = f"record_{int(time.time())}.mp3"
 
