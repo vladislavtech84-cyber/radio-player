@@ -21,8 +21,7 @@
     <!-- СЕКЦИЯ ПРЯМОГО ЭФИРА -->
     <div class="player-section">
         <h1>📻 Прямой эфир</h1>
-        <!-- ⚠️ ВСТАВЬТЕ ССЫЛКУ НА ВАШ ПОТОК НИЖЕ ВМЕСТО "ССЫЛКА_НА_ВАШЕ_РАДИО" -->
-        <audio controls src="ССЫЛКА_НА_ВАШЕ_РАДИО"></audio> 
+        <audio controls src="https://radio.5-tv.ru/radio.mp3"></audio> 
     </div>
 
     <!-- СЕКЦИЯ АРХИВА ЗАПИСЕЙ -->
@@ -33,13 +32,11 @@
 </div>
 
 <script>
-    // НАСТРОЙКИ: Ваши данные с Гитхаба уже прописаны здесь
     const GITHUB_USER = "vladislavtech84-cyber"; 
     const REPO_NAME = "radio-player";
 
     async function loadArchive() {
         const listContainer = document.getElementById('archive-list');
-        // Используем публичное API GitHub для получения списка файлов
         const url = `https://github.com{GITHUB_USER}/${REPO_NAME}/contents/`;
 
         try {
@@ -47,8 +44,6 @@
             if (!response.ok) throw new Error('Не удалось загрузить список файлов');
             
             const files = await response.json();
-            
-            // Оставляем только MP3 файлы, которые создает скрипт-регистратор
             const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
 
             if (mp3Files.length === 0) {
@@ -57,11 +52,8 @@
             }
 
             listContainer.innerHTML = '';
-
-            // Свежие записи будут отображаться вверху
             mp3Files.sort((a, b) => b.name.localeCompare(a.name));
 
-            // Создаем плеер для каждой записи
             mp3Files.forEach(file => {
                 const timestamp = file.name.replace('record_', '').replace('.mp3', '');
                 let formattedDate = "Запись программы";
@@ -86,7 +78,6 @@
         }
     }
 
-    // Запуск процесса при открытии страницы
     loadArchive();
 </script>
 
