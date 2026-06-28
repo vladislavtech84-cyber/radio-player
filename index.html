@@ -45,7 +45,6 @@
     const LIVE_STREAM = "https://5-tv.ru";
     let isRecordingNow = false;
 
-    // Функция проверяет репозиторий и выводит созданные минутные файлы
     async function updateSystem() {
         const url = "https://github.com" + new Date().getTime();
         try {
@@ -53,13 +52,11 @@
             if (!response.ok) return;
             const files = await response.json();
             
-            // Ищем минутные mp3
             let mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
-            mp3Files.sort((a, b) => b.name.localeCompare(a.name)); // Свежие файлы сверху
+            mp3Files.sort((a, b) => b.name.localeCompare(a.name));
 
-            // Выводим архив на экран ниже основного плеера
             if (mp3Files.length === 0) {
-                archiveList.innerHTML = "<p style='color:#888;'>Записей еще нет, ждем 22:30...</p>";
+                archiveList.innerHTML = "<p style='color:#888;'>Записей еще нет, ждем 22:35...</p>";
             } else {
                 archiveList.innerHTML = "";
                 mp3Files.forEach((file, index) => {
@@ -73,7 +70,6 @@
                 });
             }
 
-            // ХИТРАЯ ПРОВЕРКА: Проверяем, идет ли запись прямо сейчас через статус API Actions
             const actionsUrl = "https://github.com";
             const actionsResp = await fetch(actionsUrl);
             if (actionsResp.ok) {
@@ -81,7 +77,6 @@
                 if (actionsData.workflow_runs.length > 0) {
                     const latestRun = actionsData.workflow_runs[0];
                     
-                    // Если статус робота "в процессе" (пишет файл прямо сейчас)
                     if (latestRun.status === "queued" || latestRun.status === "in_progress") {
                         if (!isRecordingNow) {
                             isRecordingNow = true;
@@ -91,7 +86,6 @@
                             statusText.innerText = "Прямой эфир временно уступил место записи файла.";
                         }
                     } else {
-                        // Если робот закончил или спит — возвращаем ЖИВОЙ ПРЯМОЙ ЭФИР
                         if (isRecordingNow || player.src !== LIVE_STREAM) {
                             isRecordingNow = false;
                             badge.innerText = "☀️ ПРЯМОЙ ЭФИР АКТИВЕН";
@@ -107,10 +101,8 @@
         } catch (e) { console.error(e); }
     }
 
-    // Опрашиваем систему каждые 5 секунд для мгновенной реакции на тесты
     setInterval(updateSystem, 5000);
     updateSystem();
 </script>
 
 </body>
-</html>
