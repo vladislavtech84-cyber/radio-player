@@ -6,7 +6,7 @@ import sys
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3" 
 
 # Длительность записи: 1 час (3600 секунд)
-RECORD_DURATION = 3600 
+RECORD_DURATION = 60
 
 OUTPUT_FILE = f"record_{int(time.time())}.mp3"
 
