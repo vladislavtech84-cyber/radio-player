@@ -1,0 +1,33 @@
+yamlname: Radio Timer Recorder
+
+on:
+  schedule:
+    # Шаблон: 'минуты часы * * *' (внутреннее время UTC, Москва минус 3 часа)
+    # Ниже пример для запуска в 09:00, 11:00, 13:00, 15:00, 17:00, 19:00, 21:00, 23:00 по Москве
+    - cron: '0 6,8,10,12,14,16,18,20 * * *'
+  workflow_dispatch: # Позволяет запустить запись вручную кнопкой в любое время
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+
+    - name: Run Recorder
+      run: python record.py
+
+    - name: Commit and Push Record
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add *.mp3
+        git commit -m "Добавлена автоматическая запись радио (1 час)" || exit 0
+        git push
