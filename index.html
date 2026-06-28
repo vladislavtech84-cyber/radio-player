@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Радиоплеер и Архив записей</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #1a1a1a; color: #ffffff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { max-width: 600px; width: 100%; background: #2d2d2d; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h1, h2 { text-align: center; color: #00ff99; }
+        .player-section { margin-bottom: 40px; text-align: center; border-bottom: 1px solid #444; padding-bottom: 20px; }
+        audio { width: 100%; margin-top: 10px; border-radius: 8px; }
+        .track-item { background: #3d3d3d; padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+        .track-name { font-weight: bold; color: #e0e0e0; font-size: 14px; }
+        .error { color: #ff5555; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- СЕКЦИЯ ПРЯМОГО ЭФИРА -->
+    <div class="player-section">
+        <h1>📻 Прямой эфир</h1>
+        <!-- ⚠️ ВСТАВЬТЕ ССЫЛКУ НА ВАШ ПОТОК НИЖЕ ВМЕСТО "ССЫЛКА_НА_ВАШЕ_РАДИО" -->
+        <audio controls src="ССЫЛКА_НА_ВАШЕ_РАДИО"></audio> 
+    </div>
+
+    <!-- СЕКЦИЯ АРХИВА ЗАПИСЕЙ -->
+    <div>
+        <h2>📁 Архив программ</h2>
+        <div id="archive-list">Загрузка архива...</div>
+    </div>
+</div>
+
+<script>
+    // НАСТРОЙКИ: Ваши данные с Гитхаба уже прописаны здесь
+    const GITHUB_USER = "vladislavtech84-cyber"; 
+    const REPO_NAME = "radio-player";
+
+    async function loadArchive() {
+        const listContainer = document.getElementById('archive-list');
+        // Используем публичное API GitHub для получения списка файлов
+        const url = `https://github.com{GITHUB_USER}/${REPO_NAME}/contents/`;
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Не удалось загрузить список файлов');
+            
+            const files = await response.json();
+            
+            // Оставляем только MP3 файлы, которые создает скрипт-регистратор
+            const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
+
+            if (mp3Files.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center;">Записей пока нет. Ждем работы таймера.</p>';
+                return;
+            }
+
+            listContainer.innerHTML = '';
+
+            // Свежие записи будут отображаться вверху
+            mp3Files.sort((a, b) => b.name.localeCompare(a.name));
+
+            // Создаем плеер для каждой записи
+            mp3Files.forEach(file => {
+                const timestamp = file.name.replace('record_', '').replace('.mp3', '');
+                let formattedDate = "Запись программы";
+                
+                if (!isNaN(timestamp)) {
+                    const date = new Date(parseInt(timestamp) * 1000);
+                    formattedDate = `Программа от ${date.toLocaleDateString()} в ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                }
+
+                const trackDiv = document.createElement('div');
+                trackDiv.className = 'track-item';
+                trackDiv.innerHTML = `
+                    <div class="track-name">▶️ ${formattedDate}</div>
+                    <audio controls preload="none" src="${file.download_url}"></audio>
+                `;
+                listContainer.appendChild(trackDiv);
+            });
+
+        } catch (error) {
+            console.error(error);
+            listContainer.innerHTML = '<p class="error">Ошибка при загрузке архива.</p>';
+        }
+    }
+
+    // Запуск процесса при открытии страницы
+    loadArchive();
+</script>
+
+</body>
+</html>
