@@ -31,19 +31,19 @@ jobs:
         import os, time
         now = time.time()
         cutoff = now - (24 * 3600) # Граница: 24 часа назад
-        deleted_any = False
         
         for f in os.listdir("."):
             if f.startswith("record_") and f.endswith(".mp3"):
-                # Получаем время создания файла по его timestamp в названии
                 try:
-                    file_time = int(f.split("_")[1].split(".")[0])
+                    # Корректно извлекаем timestamp времени из имени файла record_12345678.mp3
+                    timestamp_part = f.replace("record_", "").replace(".mp3", "")
+                    file_time = int(timestamp_part)
+                    
                     if file_time < cutoff:
                         os.remove(f)
                         print(f"Старый файл удален автоматически: {f}")
-                        deleted_any = True
-                except:
-                    pass
+                except Exception as e:
+                    print(f"Ошибка при анализе файла {f}: {e}")
         '
 
     - name: Commit and Push Changes
