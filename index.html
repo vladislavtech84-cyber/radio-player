@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -32,13 +32,11 @@
 </div>
 
 <script>
-    // Настройки вашего аккаунта GitHub
-    const GITHUB_USER = "vladislavtech84-cyber"; 
-    const REPO_NAME = "radio-player";
-
     async function loadArchive() {
         const listContainer = document.getElementById('archive-list');
-        const url = `https://github.com{GITHUB_USER}/${REPO_NAME}/contents/`;
+        
+        // ЗДЕСЬ ИСПРАВЛЕНА ССЫЛКА НА ПРЯМОЙ АДРЕС API
+        const url = "https://github.com";
 
         try {
             const response = await fetch(url);
