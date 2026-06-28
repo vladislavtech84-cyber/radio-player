@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер: День и Ночь</title>
+    <title>ТЕСТ: День и Ночь</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #111; color: #fff; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
         .container { max-width: 500px; width: 100%; background: #222; padding: 30px; border-radius: 16px; box-shadow: 0 8px 25px rgba(0,0,0,0.7); text-align: center; margin-top: 40px; }
@@ -12,21 +12,14 @@
         .night-mode { background: #00bcff; color: #fff; }
         audio { width: 100%; margin-top: 15px; border-radius: 8px; }
         .track-info { margin-top: 15px; font-size: 16px; color: #bbb; font-weight: 500; }
-        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div id="mode-badge" class="status-badge day-mode">☀️ ДНЕВНОЙ ЭФИР</div>
-    
-    <!-- Главный заголовок, который меняется сам -->
     <h1 id="main-title">Прямой эфир радио</h1>
-
-    <!-- ЕДИНЫЙ ПЛЕЕР ДЛЯ ВСЕГО -->
     <audio id="global-player" controls autoplay></audio>
-
-    <!-- Информационная строка под плеером -->
     <div id="current-track-name" class="track-info">Загрузка эфира...</div>
 </div>
 
@@ -36,85 +29,69 @@
     const title = document.getElementById('main-title');
     const trackName = document.getElementById('current-track-name');
 
-    // Ссылки на живой поток и ваши 8 часовых записей
     const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3";
-    
-    // Сюда Гитхаб-робот сохраняет файлы. Список ваших 8 записей:
-    const NIGHT_PLAYLIST = [
-        "record_1782662038.mp3", // Сюда потом впишете имя файла от 08:00
-        "record_1782660758.mp3", // Сюда имя файла от 10:00
-        "record_1782662038.mp3", // От 12:00
-        "record_1782660758.mp3", // От 14:00
-        "record_1782662038.mp3", // От 16:00
-        "record_1782660758.mp3", // От 18:00
-        "record_1782662038.mp3", // От 20:00
-        "record_1782660758.mp3"  // От 22:00
-    ];
-
+    let nightPlaylist = [];
     let currentTrackIndex = 0;
 
-    function checkTimeAndPlay() {
-        const now = new Date();
-        const currentHour = now.getHours(); // Получаем текущий час (0-23) по вашему компьютеру
+    async function fetchNightPlaylist() {
+        const url = "https://github.com";
+        try {
+            const response = await fetch(url);
+            if (!response.ok) return;
+            const files = await response.json();
+            let mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
+            mp3Files.sort((a, b) => a.name.localeCompare(b.name));
+            if (mp3Files.length > 8) { mp3Files = mp3Files.slice(-8); }
+            nightPlaylist = mp3Files.map(file => file.download_url);
+        } catch (e) { console.error(e); }
+    }
 
-        // Если время от 00:00 до 07:59 (НОЧНОЙ РЕЖИМ)
+    async function checkTimeAndPlay() {
+        // ⚠️ ВМЕСТО РЕАЛЬНОГО ЧАСА ЖЕСТКО СТАВИМ 2 ЧАСА НОЧИ ДЛЯ ТЕСТА
+        const currentHour = 2; 
+
         if (currentHour >= 0 && currentHour < 8) {
             if (badge.innerText !== "🌙 НОЧНОЙ АРХИВ") {
-                // Переключаем интерфейс в ночной режим
                 badge.innerText = "🌙 НОЧНОЙ АРХИВ";
                 badge.className = "status-badge night-mode";
                 title.innerText = "Ночной архив программ";
                 
-                // Запускаем ночной плейлист с первого трека
-                currentTrackIndex = 0;
-                playNightTrack(currentTrackIndex);
-            }
-        } 
-        // Если время от 08:00 до 23:59 (ДНЕВНОЙ РЕЖИМ)
-        else {
-            if (player.src !== LIVE_STREAM) {
-                // Переключаем интерфейс в дневной режим
-                badge.innerText = "☀️ ДНЕВНОЙ ЭФИР";
-                badge.className = "status-badge day-mode";
-                title.innerText = "Прямой эфир радио";
-                trackName.innerText = "Вы слушаете трансляцию в реальном времени";
+                await fetchNightPlaylist();
                 
-                player.src = LIVE_STREAM;
-                player.load();
+                if (nightPlaylist.length > 0) {
+                    currentTrackIndex = 0;
+                    playNightTrack(currentTrackIndex);
+                } else {
+                    trackName.innerText = "Файлы не найдены.";
+                }
             }
         }
     }
 
-    // Функция включения конкретного трека из ночного архива
     function playNightTrack(index) {
-        if (index < NIGHT_PLAYLIST.length) {
-            trackName.innerText = `Играет запись программа №${index + 1} из 8`;
-            player.src = NIGHT_PLAYLIST[index];
+        if (index < nightPlaylist.length) {
+            trackName.innerText = `Играет запись программы №${index + 1} из ${nightPlaylist.length}`;
+            player.src = nightPlaylist[index];
             player.load();
-            player.play().catch(e => console.log("Ожидание клика пользователя"));
+            player.play().catch(e => console.log(e));
+
+            // ⚠️ ТЕСТ: Через 5 секунд принудительно переключаем на следующий трек
+            setTimeout(() => {
+                player.dispatchEvent(new Event('ended'));
+            }, 5000);
+
         } else {
-            // Если проиграли все 8 часов, крутим плейлист заново до наступления 8 утра
+            trackName.innerText = "Все ночные программы успешно прослушаны! Перезапуск круга.";
             currentTrackIndex = 0;
-            playNightTrack(0);
+            setTimeout(() => { playNightTrack(0); }, 3000);
         }
     }
 
-    // Автоматический переход на СЛЕДУЮЩИЙ трек, когда текущий час записи закончился
     player.onended = function() {
-        const now = new Date();
-        const currentHour = now.getHours();
-
-        // Переключаем на следующий трек только если всё еще ночь
-        if (currentHour >= 0 && currentHour < 8) {
-            currentTrackIndex++;
-            playNightTrack(currentTrackIndex);
-        }
+        currentTrackIndex++;
+        playNightTrack(currentTrackIndex);
     };
 
-    // Проверяем время каждую минуту, чтобы вовремя включить/выключить ночь
-    setInterval(checkTimeAndPlay, 60000);
-
-    // Первый запуск проверки при открытии страницы
     checkTimeAndPlay();
 </script>
 
