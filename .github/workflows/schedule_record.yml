@@ -4,13 +4,13 @@ on:
   schedule:
     # Запуск в 00 минут выбранных часов (по МСК: 8, 10, 12, 14, 16, 18, 20, 22)
     - cron: '0 5,7,9,11,13,15,17,19 * * *'
-  workflow_dispatch: # Позволяет запускать запись вручную кнопкой
+  workflow_dispatch: # Кнопка для ручного запуска теста
 
 jobs:
   record:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Разрешение на сохранение записанного файла в репозиторий
+      contents: write
 
     steps:
     - name: Checkout repository
