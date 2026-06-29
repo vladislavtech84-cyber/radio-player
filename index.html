@@ -20,10 +20,9 @@
     <div id="records-list">Загрузка архива...</div>
 
     <script>
-        // Автоматически определяем автора и имя репозитория из адреса сайта
-        const pathParts = window.location.pathname.split('/').filter(Boolean);
-        const repoName = pathParts[0] || ""; 
-        const username = window.location.hostname.split('.')[0];
+        // Точные данные вашего репозитория с вашего скриншота
+        const username = "vladislavtech84-cyber";
+        const repoName = "radio-player";
 
         // URL для получения списка файлов через GitHub API
         const apiUrl = `https://github.com{username}/${repoName}/contents/`;
@@ -55,7 +54,7 @@
                     const recordItem = document.createElement('div');
                     recordItem.style.marginBottom = "20px";
 
-                    // Красиво форматируем имя файла для отображения даты
+                    // Форматируем имя файла для красивого отображения даты
                     const cleanName = file.name.replace('record_', '').replace('.mp3', '').replace('_', ' ').replace('-', ':');
 
                     recordItem.innerHTML = `
