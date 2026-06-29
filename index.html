@@ -20,12 +20,8 @@
     <div id="records-list">Загрузка архива...</div>
 
     <script>
-        // Точные данные вашего репозитория с вашего скриншота
-        const username = "vladislavtech84-cyber";
-        const repoName = "radio-player";
-
-        // URL для получения списка файлов через GitHub API
-        const apiUrl = `https://github.com{username}/${repoName}/contents/`;
+        // Прямая и точная ссылка на API вашего репозитория без лишних переменных
+        const apiUrl = "https://github.com";
 
         async function loadRecords() {
             const listContainer = document.getElementById('records-list');
@@ -39,7 +35,7 @@
                 const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
 
                 if (mp3Files.length === 0) {
-                    listContainer.innerHTML = '<p>Записей пока нет.</p>';
+                    listContainer.innerHTML = '<p>Записей пока нет. Запустите экшен для теста.</p>';
                     return;
                 }
 
