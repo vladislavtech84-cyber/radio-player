@@ -2,39 +2,36 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест 8 циклов: Радио и Запись</title>
+    <title>Бесшовный Таймер Радио</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #f4f4f9; color: #333; }
         .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         button { padding: 12px 24px; font-size: 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; }
-        #status { margin-top: 25px; font-size: 16px; font-weight: bold; color: #fff; padding: 15px; background: #007bff; border-radius: 6px; }
+        #status { margin-top: 25px; font-size: 16px; font-weight: bold; color: #fff; padding: 15px; background: #28a745; border-radius: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Бесшовный Тест: Эфир / Запись</h2>
-    <audio id="mainPlayer" controls crossorigin="anonymous" style="width: 100%; margin-top: 15px;"></audio>
+    <h2>Автоматическое переключение: Эфир / Запись</h2>
+    <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
-    <button id="playBtn">Запустить Радио</button>
-    <div id="status">Статус: Остановлено. Нажмите кнопку для старта.</div>
+    <button id="playBtn">Запустить Эфир</button>
+    <div id="status">Статус: Остановлено. Нажмите кнопку.</div>
 </div>
 
 <script>
 const STREAM_URL = "https://radio.5-tv.ru/radio.mp3"; 
+// Ссылка на ваш тестовый файл в репозитории GitHub
+const RECORD_URL = "test_1.mp3"; 
 
 const player = document.getElementById('mainPlayer');
 const playBtn = document.getElementById('playBtn');
 const statusDiv = document.getElementById('status');
 
 let checkInterval;
-let mediaRecorder;
-let recordedChunks = [];
-let hiddenAudio;
-let nextFileToPlay = null;
-let currentCycle = 0;
+let isRadioMode = true;
 
-// Старт по кнопке
 playBtn.addEventListener('click', () => {
     if (player.paused) {
         startLiveRadio();
@@ -43,7 +40,7 @@ playBtn.addEventListener('click', () => {
         startTimelineChecking();
     } else {
         player.pause();
-        playBtn.innerText = "Запустить Радио";
+        playBtn.innerText = "Запустить Эфир";
         playBtn.style.background = "#28a745";
         statusDiv.innerText = "Статус: Остановлено";
         statusDiv.style.background = "#6c757d";
@@ -52,10 +49,21 @@ playBtn.addEventListener('click', () => {
 });
 
 function startLiveRadio() {
+    isRadioMode = true;
     player.src = STREAM_URL;
     player.play().catch(e => console.log("Кликните для активации звука"));
     statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
     statusDiv.style.background = "#28a745";
+}
+
+function playRecordedFile() {
+    isRadioMode = false;
+    statusDiv.innerText = "РЕЖИМ: Воспроизведение записи (test_1.mp3)";
+    statusDiv.style.background = "#ffc107";
+    statusDiv.style.color = "#000";
+    
+    player.src = RECORD_URL;
+    player.play().catch(e => console.log("Ошибка воспроизведения файла"));
 }
 
 function startTimelineChecking() {
@@ -66,71 +74,27 @@ function startTimelineChecking() {
         const m = now.getMinutes();
         const s = now.getSeconds();
 
-        // Ровно в 16:54 запускаем пред-запись первого куска, чтобы в 16:55 уже была готовая запись!
-        if (h === 16 && m === 54 && s === 0 && currentCycle === 0) {
-            currentCycle = 1;
-            startBackgroundRecording(1);
+        // ЦИКЛ 1: В 17:05:00 включаем ЗАПИСЬ
+        if (h === 17 && m === 5 && s === 0 && isRadioMode) {
+            playRecordedFile();
+        }
+        
+        // В 17:06:00 возвращаем ЭФИР
+        if (h === 17 && m === 6 && s === 0 && !isRadioMode) {
+            playRecordedFile(); // Перезапуск или возврат к радио
+            startLiveRadio();
         }
 
-        // Циклы переключения каждую минуту с 16:55 до 17:02
-        if (h === 16 && m >= 55 && m <= 17) {
-            let cycleTimeline = m - 55; // 0, 1, 2...
-            
-            // Каждую нечетную минуту (16:55, 16:57, 16:59, 17:01) включаем ЗАПИСЬ
-            if (cycleTimeline % 2 === 0 && s === 0 && nextFileToPlay) {
-                playRecordedSlice();
-            }
-            
-            // Каждую четную минуту (16:56, 16:58, 17:00, 17:02) возвращаем ЭФИР
-            if (cycleTimeline % 2 === 1 && s === 0 && player.src !== STREAM_URL) {
-                startLiveRadio();
-                // И сразу в фоне начинаем писать следующий кусок для будущего цикла
-                startBackgroundRecording();
-            }
+        // ЦИКЛ 2: В 17:07:00 включаем ЗАПИСЬ
+        if (h === 17 && m === 7 && s === 0 && isRadioMode) {
+            playRecordedFile();
+        }
+        
+        // В 17:08:00 возвращаем ЭФИР
+        if (h === 17 && m === 8 && s === 0 && !isRadioMode) {
+            startLiveRadio();
         }
     }, 1000);
-}
-
-// Скрытая фоновая запись потока в память браузера
-function startBackgroundRecording() {
-    recordedChunks = [];
-    const recordAudioContext = new (window.AudioContext || window.webkitAudioContext)();
-    const dest = recordAudioContext.createMediaStreamDestination();
-    
-    hiddenAudio = new Audio(STREAM_URL);
-    hiddenAudio.crossOrigin = "anonymous";
-    
-    const source = recordAudioContext.createMediaElementSource(hiddenAudio);
-    source.connect(dest);
-    hiddenAudio.play();
-
-    mediaRecorder = new MediaRecorder(dest.stream);
-    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
-    
-    mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(recordedChunks, { type: 'audio/mp3' });
-        nextFileToPlay = URL.createObjectURL(audioBlob);
-        hiddenAudio.pause();
-        hiddenAudio.src = "";
-    };
-
-    mediaRecorder.start();
-
-    // Ровно через 1 минуту останавливаем запись, подготавливая файл
-    setTimeout(() => {
-        if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
-    }, 60000);
-}
-
-// Воспроизведение заготовленного куска записи
-function playRecordedSlice() {
-    statusDiv.innerText = "РЕЖИМ: Воспроизведение записанного фрагмента (1 мин)";
-    statusDiv.style.background = "#ffc107";
-    statusDiv.style.color = "#000";
-    
-    player.src = nextFileToPlay;
-    player.play();
-    nextFileToPlay = null; // Очищаем указатель
 }
 </script>
 </body>
