@@ -26,23 +26,63 @@
     <!-- СЕКЦИЯ АРХИВА ЗАПИСЕЙ -->
     <div>
         <h2>📁 Архив программ</h2>
-        <div id="archive-list">
-            
-            <!-- Исправленный плеер для записи №4 -->
-            <div class="track-item">
-                <div class="track-name">▶️ Тестовая запись №4</div>
-                <audio controls preload="none" src="record_1782662038.mp3"></audio>
-            </div>
-
-            <!-- Исправленный плеер для записи №3 -->
-            <div class="track-item">
-                <div class="track-name">▶️ Тестовая запись №3</div>
-                <audio controls preload="none" src="record_1782660758.mp3"></audio>
-            </div>
-
-        </div>
+        <!-- Сюда робот сам будет добавлять все созданные плееры -->
+        <div id="archive-list">Загрузка архива программ...</div>
     </div>
 </div>
+
+<script>
+    async function loadArchive() {
+        const listContainer = document.getElementById('archive-list');
+        // Прямой запрос к вашему репозиторию без кэширования
+        const url = "https://github.com" + new Date().getTime();
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Не удалось загрузить список файлов');
+            
+            const files = await response.json();
+            // Находим все MP3 файлы, которые начинаются на "record_"
+            const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
+
+            if (mp3Files.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; color:#888;">Записей пока нет. Ожидаем работу таймера.</p>';
+                return;
+            }
+
+            listContainer.innerHTML = '';
+            // Сортируем: самые новые записи за день будут отображаться вверху списка
+            mp3Files.sort((a, b) => b.name.localeCompare(a.name));
+
+            // Создаем плееры для каждого файла в вашем дизайне со скриншота
+            mp3Files.forEach((file, index) => {
+                const timestamp = file.name.replace('record_', '').replace('.mp3', '');
+                let formattedDate = `Запись радиопотока №${mp3Files.length - index}`;
+                
+                // Превращаем цифры времени в красивую дату и часы
+                if (!isNaN(timestamp)) {
+                    const date = new Date(parseInt(timestamp) * 1000);
+                    formattedDate = `Программа от ${date.toLocaleDateString()} в ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                }
+
+                const trackDiv = document.createElement('div');
+                trackDiv.className = 'track-item';
+                trackDiv.innerHTML = `
+                    <div class="track-name">▶️ ${formattedDate}</div>
+                    <audio controls preload="none" src="${file.name}"></audio>
+                `;
+                listContainer.appendChild(trackDiv);
+            });
+
+        } catch (error) {
+            console.error(error);
+            listContainer.innerHTML = '<p style="text-align:center; color:#ff5555;">Ошибка при обновлении архива.</p>';
+        }
+    }
+
+    // Запускаем поиск файлов сразу при загрузке страницы
+    loadArchive();
+</script>
 
 </body>
 </html>
