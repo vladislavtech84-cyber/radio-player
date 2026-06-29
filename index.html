@@ -3,72 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер и Архив записей</title>
+    <title>Радиоплеер — Тест фоновой записи</title>
 </head>
 <body>
 
-    <h1>Прямой эфир</h1>
-    <!-- Основной плеер радио -->
-    <audio controls src="https://radio.5-tv.ru/radio.mp3">
-        Ваш браузер не поддерживает аудиоэлемент.
-    </audio>
-
-    <hr>
-
-    <h2>Архив записей</h2>
-    <!-- Сюда скрипт автоматически добавит плееры для каждого файла -->
-    <div id="records-list">Загрузка архива...</div>
+    <h1>Радиоплеер</h1>
+    
+    <p id="status" style="font-weight: bold; color: green;">Статус: Прямой эфир</p>
+    
+    <!-- Основной плеер для пользователя -->
+    <audio id="audio-player" controls src="https://5-tv.ru"></audio>
 
     <script>
-        // Прямая и точная ссылка на API вашего репозитория без лишних переменных
-        const apiUrl = "https://github.com";
+        const audioPlayer = document.getElementById('audio-player');
+        const statusText = document.getElementById('status');
+        
+        const STREAM_URL = "https://radio.5-tv.ru/radio.mp3";
+        
+        // === НАСТРОЙКА ТЕСТА ===
+        // Укажите время старта фоновой записи (например, 13:10)
+        const TARGET_HOUR = 13;
+        const TARGET_MINUTE = 10;
+        
+        // Длительность записи в миллисекундах (5 минут = 300000)
+        // Для быстрого теста выставлено 15000 (15 секунд), чтобы сразу проверить переключение
+        const RECORD_TIME = 15000; 
+        
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecorded = false;
 
-        async function loadRecords() {
-            const listContainer = document.getElementById('records-list');
+        // Таймер каждую секунду проверяет время на вашем компьютере
+        const timeCheckInterval = setInterval(() => {
+            const now = new Date();
+            if (now.getHours() === TARGET_HOUR && now.getMinutes() === TARGET_MINUTE && !isRecorded) {
+                isRecorded = true;
+                clearInterval(timeCheckInterval); // Выключаем проверку, запускаем тест
+                startBackgroundRecording();
+            }
+        }, 1000);
+
+        async function startBackgroundRecording() {
+            statusText.innerText = "Статус: Внимание! Началась фоновая запись (вы продолжаете слушать радио)...";
+            statusText.style.color = "orange";
+
             try {
-                const response = await fetch(apiUrl);
-                if (!response.ok) throw new Error('Не удалось загрузить список файлов');
+                // Создаем изолированный фоновый поток для записи, который не мешает основному плееру
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const streamDest = audioCtx.createMediaStreamDestination();
                 
-                const files = await response.json();
+                const hiddenAudio = new Audio(STREAM_URL);
+                hiddenAudio.crossOrigin = "anonymous";
                 
-                // Фильтруем файлы: оставляем только mp3, которые начинаются на "record_"
-                const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
+                const source = audioCtx.createMediaElementSource(hiddenAudio);
+                source.connect(streamDest);
+                
+                // Глушим звук скрытого плеера, чтобы не было эха (вы слышите только основной плеер)
+                hiddenAudio.volume = 0; 
+                hiddenAudio.play();
 
-                if (mp3Files.length === 0) {
-                    listContainer.innerHTML = '<p>Записей пока нет. Запустите экшен для теста.</p>';
-                    return;
-                }
+                mediaRecorder = new MediaRecorder(streamDest.stream);
+                audioChunks = [];
 
-                // Очищаем текст загрузки
-                listContainer.innerHTML = '';
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
 
-                // Сортируем файлы по имени (новые будут вверху)
-                mp3Files.sort((a, b) => b.name.localeCompare(a.name));
+                mediaRecorder.onstop = () => {
+                    hiddenAudio.pause();
+                    statusText.innerText = "Статус: Запись завершена! Отключаем радио и включаем воспроизведение записи...";
+                    statusText.style.color = "blue";
 
-                // Создаем для каждого файла плеер
-                mp3Files.forEach(file => {
-                    const recordItem = document.createElement('div');
-                    recordItem.style.marginBottom = "20px";
+                    // Создаем аудиофайл из записанных в памяти кусочков
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    const audioUrl = URL.createObjectURL(audioBlob);
 
-                    // Форматируем имя файла для красивого отображения даты
-                    const cleanName = file.name.replace('record_', '').replace('.mp3', '').replace('_', ' ').replace('-', ':');
+                    // Переключаем основной плеер на воспроизведение созданной записи
+                    audioPlayer.src = audioUrl;
+                    audioPlayer.play();
 
-                    recordItem.innerHTML = `
-                        <p><strong>Запись от: ${cleanName}</strong></p>
-                        <audio controls src="${file.download_url}" preload="none"></audio>
-                    `;
-                    listContainer.appendChild(recordItem);
-                });
+                    // Следим за окончанием проигрывания записи
+                    audioPlayer.onended = () => {
+                        statusText.innerText = "Статус: Запись доиграла. Возвращаем прямой эфир.";
+                        statusText.style.color = "green";
+                        
+                        // Возвращаем поток радио и очищаем событие окончания
+                        audioPlayer.src = STREAM_URL;
+                        audioPlayer.onended = null;
+                        audioPlayer.play();
+                    };
+                };
 
-            } catch (error) {
-                console.error(error);
-                listContainer.innerHTML = '<p>Ошибка при загрузке архива записей.</p>';
+                // Запуск процесса записи
+                mediaRecorder.start();
+
+                // Автоматическая остановка записи по таймеру
+                setTimeout(() => {
+                    if (mediaRecorder && mediaRecorder.state === "recording") {
+                        mediaRecorder.stop();
+                    }
+                }, RECORD_TIME);
+
+            } catch (err) {
+                console.error("Ошибка захвата потока:", err);
+                statusText.innerText = "Статус: Браузер заблокировал фоновую запись из-за CORS-политики.";
+                statusText.style.color = "red";
             }
         }
-
-        // Запускаем поиск файлов при загрузке страницы
-        loadRecords();
     </script>
-
 </body>
 </html>
