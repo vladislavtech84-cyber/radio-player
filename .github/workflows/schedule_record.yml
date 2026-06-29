@@ -1,16 +1,17 @@
-name: Radio Timer Recorder
+name: Record Radio Schedule
 
 on:
   schedule:
-    # Запуск ровно в 00 минут указанных часов по UTC (соответствует 8,10,12,14,16,18,20,22 по Москве)
+    # Запуск в 00 минут выбранных часов (по МСК: 8, 10, 12, 14, 16, 18, 20, 22)
     - cron: '0 5,7,9,11,13,15,17,19 * * *'
-  workflow_dispatch: # Кнопка ручного старта в панели Actions
+  workflow_dispatch: # Позволяет запускать запись вручную кнопкой
 
 jobs:
   record:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Разрешение на сохранение записанного файла в репозиторий
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -20,13 +21,16 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Run Recorder
+    - name: Install dependencies
+      run: pip install requests
+
+    - name: Run recording script
       run: python record.py
 
-    - name: Commit and Push Record
+    - name: Commit and Push recorded file
       run: |
-        git config --global user.name "GitHub Actions"
-        git config --global user.email "actions@github.com"
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
         git add *.mp3
-        git commit -m "Добавлена автоматическая запись радио (1 час)" || exit 0
+        git commit -m "Auto-record: $(date +'%Y-%m-%d %H:%M')" || echo "No changes to commit"
         git push
