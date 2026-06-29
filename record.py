@@ -6,7 +6,7 @@ from datetime import datetime
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
 
 # Длительность одной записи — ровно 1 час (60 * 60 = 3600 секунд)
-RECORD_DURATION = 3600 
+RECORD_DURATION = 60
 
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
 output_filename = f"record_{current_time}.mp3"
