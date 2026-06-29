@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер — Серверный тест</title>
+    <title>Радиоплеер — Автотест 14:10</title>
 </head>
 <body>
 
@@ -16,18 +16,19 @@
         const statusText = document.getElementById('status');
         const STREAM_URL = "https://radio.5-tv.ru/radio.mp3";
 
-        // Ссылка на готовый файл в вашем репозитории (добавили случайный параметр, чтобы избежать кэша)
-        const RECORDED_FILE_URL = "https://githubusercontent.com" + Date.now();
+        // Ссылка на файл через хостинг GitHub Pages (без CORS блокировок браузера)
+        const RECORDED_FILE_URL = "https://github.io" + Date.now();
 
         let isPlayed = false;
 
+        // Проверяем время каждую секунду
         setInterval(() => {
             const now = new Date();
             const currentHour = now.getHours();
             const currentMinute = now.getMinutes();
 
-            // В 13:50 сервер начал писать. В 13:55 запись готова — включаем её на сайте!
-            if (currentHour === 13 && currentMinute === 55 && !isPlayed) {
+            // Сервер начнет писать в 14:10. В 14:15 запись завершится и файл обновится — включаем!
+            if (currentHour === 14 && currentMinute === 15 && !isPlayed) {
                 isPlayed = true;
                 playRecordedFile();
             }
@@ -37,13 +38,13 @@
             statusText.innerText = "Статус: Серверная запись готова! Отключаем радио и включаем запись...";
             statusText.style.color = "blue";
 
-            // Переключаем плеер на файл из GitHub
+            // Загружаем обновленный аудиофайл со звуком
             audioPlayer.src = RECORDED_FILE_URL;
             audioPlayer.play();
 
-            // Когда 5-минутный файл доиграет
+            // Когда 5-минутная запись полностью доиграет
             audioPlayer.onended = () => {
-                statusText.innerText = "Статус: Запись доиграла. Возвращаем прямой эфир.";
+                statusText.innerText = "Статус: Прослушивание записи завершено. Возвращаем прямой эфир.";
                 statusText.style.color = "green";
                 
                 audioPlayer.src = STREAM_URL;
