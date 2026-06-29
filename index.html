@@ -3,110 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер — Тест 13:25</title>
+    <title>Радиоплеер — Серверный тест</title>
 </head>
 <body>
 
     <h1>Радиоплеер</h1>
-    
     <p id="status" style="font-weight: bold; color: green;">Статус: Прямой эфир</p>
-    
-    <!-- Главный плеер, который вы слушаете -->
-    <audio id="audio-player" controls src="https://radio.5-tv.ru/radio.mp3"></audio>
+    <audio id="audio-player" controls src="https://5-tv.ru"></audio>
 
     <script>
         const audioPlayer = document.getElementById('audio-player');
         const statusText = document.getElementById('status');
-        
-        const STREAM_URL = "https://5-tv.ru";
-        
-        // --- ТОЧНАЯ НАСТРОЙКА ВРЕМЕНИ ТЕСТА ---
-        const TARGET_HOUR = 13;
-        const TARGET_MINUTE = 25;
-        // Длительность записи — ровно 5 минут (5 * 60 * 1000 = 300000 миллисекунд)
-        const RECORD_TIME = 300000; 
-        
-        let mediaRecorder;
-        let audioChunks = [];
-        let isRecorded = false;
+        const STREAM_URL = "https://radio.5-tv.ru/radio.mp3";
 
-        // Каждую секунду проверяем время на компьютере
-        const timeCheckInterval = setInterval(() => {
+        // Ссылка на готовый файл в вашем репозитории (добавили случайный параметр, чтобы избежать кэша)
+        const RECORDED_FILE_URL = "https://githubusercontent.com" + Date.now();
+
+        let isPlayed = false;
+
+        setInterval(() => {
             const now = new Date();
-            if (now.getHours() === TARGET_HOUR && now.getMinutes() === TARGET_MINUTE && !isRecorded) {
-                isRecorded = true;
-                clearInterval(timeCheckInterval); // Выключаем проверку, запускаем процесс
-                startBackgroundRecording();
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+
+            // В 13:50 сервер начал писать. В 13:55 запись готова — включаем её на сайте!
+            if (currentHour === 13 && currentMinute === 55 && !isPlayed) {
+                isPlayed = true;
+                playRecordedFile();
             }
         }, 1000);
 
-        async function startBackgroundRecording() {
-            statusText.innerText = "Статус: Идет фоновая запись (5 минут)... Вы продолжаете слушать радио.";
-            statusText.style.color = "orange";
+        function playRecordedFile() {
+            statusText.innerText = "Статус: Серверная запись готова! Отключаем радио и включаем запись...";
+            statusText.style.color = "blue";
 
-            try {
-                // Создаем изолированную аудио-систему в памяти браузера для чистой записи
-                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const streamDest = audioCtx.createMediaStreamDestination();
+            // Переключаем плеер на файл из GitHub
+            audioPlayer.src = RECORDED_FILE_URL;
+            audioPlayer.play();
+
+            // Когда 5-минутный файл доиграет
+            audioPlayer.onended = () => {
+                statusText.innerText = "Статус: Запись доиграла. Возвращаем прямой эфир.";
+                statusText.style.color = "green";
                 
-                // Создаем скрытый плеер, который будет качать поток для записи
-                const hiddenAudio = new Audio(STREAM_URL);
-                hiddenAudio.crossOrigin = "anonymous";
-                
-                const source = audioCtx.createMediaElementSource(hiddenAudio);
-                source.connect(streamDest);
-                
-                // Глушим громкость скрытого плеера, чтобы не было эха (вы слышите только основной плеер)
-                hiddenAudio.volume = 0; 
-                hiddenAudio.play();
-
-                mediaRecorder = new MediaRecorder(streamDest.stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
-                };
-
-                mediaRecorder.onstop = () => {
-                    hiddenAudio.pause();
-                    statusText.innerText = "Статус: Запись окончена! Включаем воспроизведение записи, радио отключено.";
-                    statusText.style.color = "blue";
-
-                    // Собираем записанные кусочки звука в один файл
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                    const audioUrl = URL.createObjectURL(audioBlob);
-
-                    // Переключаем ваш плеер на этот файл и запускаем
-                    audioPlayer.src = audioUrl;
-                    audioPlayer.play();
-
-                    // Ждем, пока 5-минутная запись полностью доиграет
-                    audioPlayer.onended = () => {
-                        statusText.innerText = "Статус: Запись закончилась. Возвращаем прямой эфир.";
-                        statusText.style.color = "green";
-                        
-                        // Возвращаем радиовещание назад
-                        audioPlayer.src = STREAM_URL;
-                        audioPlayer.onended = null; // Очищаем событие
-                        audioPlayer.play();
-                    };
-                };
-
-                // Стартуем запись
-                mediaRecorder.start();
-
-                // Ровно через 5 минут останавливаем запись
-                setTimeout(() => {
-                    if (mediaRecorder && mediaRecorder.state === "recording") {
-                        mediaRecorder.stop();
-                    }
-                }, RECORD_TIME);
-
-            } catch (err) {
-                console.error("Ошибка фонового захвата:", err);
-                statusText.innerText = "Статус: Ошибка записи. Проверьте права CORS в браузере.";
-                statusText.style.color = "red";
-            }
+                audioPlayer.src = STREAM_URL;
+                audioPlayer.onended = null;
+                audioPlayer.play();
+            };
         }
     </script>
 </body>
