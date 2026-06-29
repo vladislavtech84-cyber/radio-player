@@ -2,12 +2,18 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Радио Петербург — Ночной Архив</title>
+    <title>Радио Петербург — Архив и Эфир</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
+        body { font-family: sans-serif; text-align: center; padding-top: 40px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
-        button { padding: 12px 24px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; }
-        #status { margin-top: 25px; font-size: 16px; font-weight: bold; padding: 15px; background: #28a745; border-radius: 6px; }
+        button { padding: 12px 20px; font-size: 15px; cursor: pointer; color: white; border: none; border-radius: 6px; font-weight: bold; margin: 5px; transition: 0.2s; }
+        .btn-live { background: #28a745; }
+        .btn-live:hover { background: #218838; }
+        .btn-archive { background: #007bff; }
+        .btn-archive:hover { background: #0069d9; }
+        .btn-stop { background: #dc3545; }
+        .btn-stop:hover { background: #c82333; }
+        #status { margin-top: 25px; font-size: 16px; font-weight: bold; padding: 15px; background: #6c757d; border-radius: 6px; }
     </style>
 </head>
 <body>
@@ -16,40 +22,65 @@
     <h2>Радио Петербург (5 канал)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
-    <button id="playBtn">Слушать Эфир</button>
-    <div id="status">Статус: Остановлено</div>
+    
+    <!-- Кнопки управления -->
+    <button class="btn-live" id="liveBtn">Прямой Эфир</button>
+    <button class="btn-archive" id="part1Btn">Архив: Часть 1</button>
+    <button class="btn-archive" id="part2Btn">Архив: Часть 2</button>
+    <button class="btn-stop" id="stopBtn">Стоп</button>
+    
+    <div id="status">Статус: Плеер остановлен</div>
 </div>
 
 <script>
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3"; 
 
 const player = document.getElementById('mainPlayer');
-const playBtn = document.getElementById('playBtn');
+const liveBtn = document.getElementById('liveBtn');
+const part1Btn = document.getElementById('part1Btn');
+const part2Btn = document.getElementById('part2Btn');
+const stopBtn = document.getElementById('stopBtn');
 const statusDiv = document.getElementById('status');
 
 let checkInterval;
 
-playBtn.addEventListener('click', () => {
-    if (player.paused) {
-        startLiveRadio();
-        playBtn.innerText = "Остановить";
-        startTimelineChecking();
-    } else {
-        player.pause();
-        playBtn.innerText = "Слушать Эфир";
-        statusDiv.innerText = "Статус: Остановлено";
-        statusDiv.style.background = "#6c757d";
-        clearInterval(checkInterval);
-    }
+// Кнопка: Прямой эфир
+liveBtn.addEventListener('click', () => {
+    startLiveRadio();
+    startTimelineChecking(); // Включаем слежение за временем 01:00
+});
+
+// Кнопка: Архив Часть 1 (ручной запуск)
+part1Btn.addEventListener('click', () => {
+    clearInterval(checkInterval);
+    playArchivePart(1);
+});
+
+// Кнопка: Архив Часть 2 (ручной запуск)
+part2Btn.addEventListener('click', () => {
+    clearInterval(checkInterval);
+    playArchivePart(2);
+});
+
+// Кнопка: Стоп
+stopBtn.addEventListener('click', () => {
+    player.pause();
+    player.src = "";
+    statusDiv.innerText = "Статус: Плеер остановлен";
+    statusDiv.style.background = "#6c757d";
+    statusDiv.style.color = "#fff";
+    clearInterval(checkInterval);
 });
 
 function startLiveRadio() {
     player.src = LIVE_STREAM;
     player.play().catch(e => console.log("Нажмите играть"));
-    statusDiv.innerText = "РЕЖИМ: Живой прямой эфир (Идет фоновая запись на сервере)";
+    statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
     statusDiv.style.background = "#28a745";
+    statusDiv.style.color = "#fff";
 }
 
+// Автоматическое переключение в 01:00 ночи
 function startTimelineChecking() {
     clearInterval(checkInterval);
     checkInterval = setInterval(() => {
@@ -58,7 +89,7 @@ function startTimelineChecking() {
         const m = now.getMinutes();
         const s = now.getSeconds();
 
-        // Ровно в 01:00:00 ночи отключаем трансляцию и запускаем Архив (Часть 1)
+        // Если вы оставили плеер включенным ночью, в 01:00:00 он сам переключится на запись
         if (h === 1 && m === 0 && s === 0) {
             playArchivePart(1);
         }
@@ -66,20 +97,24 @@ function startTimelineChecking() {
 }
 
 function playArchivePart(partNumber) {
-    statusDiv.innerText = `РЕЖИМ: Трансляция окончена. Играет Архив, Часть ${partNumber}`;
+    statusDiv.innerText = `РЕЖИМ: Играет Архив, Часть ${partNumber} (Запись от 18:00)`;
     statusDiv.style.background = "#ffc107";
     statusDiv.style.color = "#000";
 
-    // Браузер загружает файл, который записал и сохранил облачный робот
-    player.src = `part_${partNumber}.mp3?v=${new Date().getTime()}`; // Очистка кэша
-    player.play().catch(e => console.log("Ошибка воспроизведения архива"));
+    // Загружаем файл из репозитория с защитой от кэширования браузера
+    player.src = `part_${partNumber}.mp3?v=${new Date().getTime()}`; 
+    player.play().catch(e => {
+        statusDiv.innerText = `Ошибка: Файл part_${partNumber}.mp3 еще не записан роботом на GitHub`;
+        statusDiv.style.background = "#dc3545";
+        statusDiv.style.color = "#fff";
+    });
 
-    // Когда первая часть (3.5 часа) закончится, автоматически включится вторая
+    // Автопереход с 1-й части на 2-ю
     player.onended = () => {
         if (partNumber === 1) {
             playArchivePart(2);
         } else {
-            statusDiv.innerText = "РЕЖИМ: Архив полностью проигран. Ожидание дневного эфира.";
+            statusDiv.innerText = "РЕЖИМ: Весь архив полностью проигран.";
             statusDiv.style.background = "#007bff";
             statusDiv.style.color = "#fff";
             player.onended = null;
