@@ -1,16 +1,20 @@
-name: Radio Test 8 Cycles
+name: Night Radio Archive
 
 on:
   schedule:
-    # Запуск ровно в 16:55 по МСК (13:55 UTC)
-    - cron: '55 13 * * *'
+    # Часть 1: запуск в 18:00 по МСК (15:00 UTC)
+    - cron: '0 15 * * *'
+    # Часть 2: запуск в 21:30 по МСК (18:30 UTC)
+    - cron: '30 18 * * *'
   workflow_dispatch:
 
 jobs:
-  test_record:
+  record_marathon:
     runs-on: ubuntu-latest
+    timeout-minutes: 240 # Лимит 4 часа на запуск
+    
     steps:
-    - name: Checkout
+    - name: Checkout Code
       uses: actions/checkout@v4
 
     - name: Setup Python
@@ -18,14 +22,14 @@ jobs:
       with:
         python-version: '3.x'
 
-    - name: Run 8 cycles of 1 minute
-      # Запускаем скрипт, передавая ему количество циклов (8) и длину цикла (60 сек)
-      run: python record.py 8 60
+    - name: Run Recording
+      # Скрипт сам поймет по времени, какую часть записывать (каждая по 12600 сек = 3.5 часа)
+      run: python record.py 12600
 
-    - name: Push to GitHub
+    - name: Save Audio to Repo
       run: |
         git config --global user.name "Radio-Bot"
         git config --global user.email "radio-bot@github.com"
-        git add *.mp3
-        git commit -m "Тест: 8 циклов записи завершены [skip ci]" || echo "Нет изменений"
+        git add part_1.mp3 part_2.mp3
+        git commit -m "Обновлен ночной архив радио [skip ci]" || echo "Нет изменений"
         git push
