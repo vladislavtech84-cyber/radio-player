@@ -1,36 +1,31 @@
-name: Record Radio Schedule
+name: Radio Test 8 Cycles
 
 on:
   schedule:
-    # Автоматический запуск ровно в 14:30 по Московскому времени (11:30 UTC)
-    - cron: '30 11 * * *'
-  workflow_dispatch: # Кнопка ручного запуска на всякий случай
+    # Запуск ровно в 16:55 по МСК (13:55 UTC)
+    - cron: '55 13 * * *'
+  workflow_dispatch:
 
 jobs:
-  record:
+  test_record:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
     steps:
-    - name: Checkout repository
+    - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up Python
+    - name: Setup Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
-    - name: Install dependencies
-      run: pip install requests
+    - name: Run 8 cycles of 1 minute
+      # Запускаем скрипт, передавая ему количество циклов (8) и длину цикла (60 сек)
+      run: python record.py 8 60
 
-    - name: Run recording script
-      run: python record.py
-
-    - name: Commit and Push recorded file
+    - name: Push to GitHub
       run: |
-        git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@://github.com"
-        git add test_record.mp3
-        git commit -m "Automated test record at 14:10" || echo "No changes"
+        git config --global user.name "Radio-Bot"
+        git config --global user.email "radio-bot@github.com"
+        git add *.mp3
+        git commit -m "Тест: 8 циклов записи завершены [skip ci]" || echo "Нет изменений"
         git push
