@@ -2,17 +2,17 @@ import requests
 import time
 from datetime import datetime
 
-# Ваша ссылка на радио
-STREAM_URL = "https://5-tv.ru"
+# Ваша ссылка на радио (полная, без изменений)
+STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
 
-# Длительность одной записи — 2 часа (2 * 60 * 60 = 7200 секунд)
-RECORD_DURATION = 7200 
+# Длительность одной записи — ровно 1 час (60 * 60 = 3600 секунд)
+RECORD_DURATION = 3600 
 
 current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
 output_filename = f"record_{current_time}.mp3"
 
 print(f"Старт записи потока: {STREAM_URL}")
-print(f"Длительность: 2 часа. Файл: {output_filename}")
+print(f"Длительность: 1 час. Файл: {output_filename}")
 
 start_time = time.time()
 
