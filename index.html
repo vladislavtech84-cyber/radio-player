@@ -2,125 +2,54 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Бесшовный Таймер Радио</title>
+    <title>Радио Петербург — Ночной Архив</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #f4f4f9; color: #333; }
-        .container { max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        button { padding: 12px 24px; font-size: 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; }
-        #status { margin-top: 25px; font-size: 16px; font-weight: bold; color: #fff; padding: 15px; background: #28a745; border-radius: 6px; }
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
+        .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 6px; font-weight: bold; }
+        #status { margin-top: 25px; font-size: 16px; font-weight: bold; padding: 15px; background: #28a745; border-radius: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Автоматическое переключение: Эфир / Запись</h2>
+    <h2>Радио Петербург (5 канал)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
-    <button id="playBtn">Запустить Эфир</button>
-    <div id="status">Статус: Остановлено. Нажмите кнопку для старта.</div>
+    <button id="playBtn">Слушать Эфир</button>
+    <div id="status">Статус: Остановлено</div>
 </div>
 
 <script>
-// Поток радио через CORS-прокси для свободного чтения бинарных данных
-const RADIO_STREAM = "https://corsproxy.io?" + encodeURIComponent("https://radio.5-tv.ru/radio.mp3"); 
+const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3"; 
 
 const player = document.getElementById('mainPlayer');
 const playBtn = document.getElementById('playBtn');
 const statusDiv = document.getElementById('status');
 
 let checkInterval;
-let audioChunks = [];
-let reader = null;
-let controller = null;
 
 playBtn.addEventListener('click', () => {
     if (player.paused) {
         startLiveRadio();
         playBtn.innerText = "Остановить";
-        playBtn.style.background = "#dc3545";
         startTimelineChecking();
     } else {
         player.pause();
-        playBtn.innerText = "Запустить Эфир";
-        playBtn.style.background = "#28a745";
+        playBtn.innerText = "Слушать Эфир";
         statusDiv.innerText = "Статус: Остановлено";
         statusDiv.style.background = "#6c757d";
         clearInterval(checkInterval);
-        stopBuffering();
     }
 });
 
-// Включение прямого эфира
 function startLiveRadio() {
-    player.src = "https://radio.5-tv.ru/radio.mp3"; // Играем чистый поток напрямую
-    player.play().catch(e => console.log("Нажмите на кнопку плеера"));
-    statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
+    player.src = LIVE_STREAM;
+    player.play().catch(e => console.log("Нажмите играть"));
+    statusDiv.innerText = "РЕЖИМ: Живой прямой эфир (Идет фоновая запись на сервере)";
     statusDiv.style.background = "#28a745";
-    statusDiv.style.color = "#fff";
 }
 
-// Запуск прямого скачивания звука в память (без использования блокируемого рекордера)
-async function startAudioBuffering() {
-    statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В фоне кэшируется минутный кусок...]";
-    statusDiv.style.background = "#007bff";
-    audioChunks = [];
-    
-    try {
-        controller = new AbortController();
-        const response = await fetch(RADIO_STREAM, { signal: controller.signal });
-        reader = response.body.getReader();
-
-        // Запускаем таймер на остановку скачивания ровно через 1 минуту (60000 мс)
-        setTimeout(() => {
-            stopBufferingAndPlay();
-        }, 60000);
-
-        // Читаем бинарный поток данных
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-            audioChunks.push(value);
-        }
-    } catch (e) {
-        console.log("Буферизация остановлена или завершена");
-    }
-}
-
-// Принудительная остановка скачивания потока
-function stopBuffering() {
-    if (controller) controller.abort();
-    if (reader) reader.cancel();
-}
-
-// Превращаем скачанные байты в аудиофайл и запускаем его
-function stopBufferingAndPlay() {
-    stopBuffering();
-    
-    if (audioChunks.length === 0) {
-        statusDiv.innerText = "Ошибка: Данные звука не успели скачаться";
-        startLiveRadio();
-        return;
-    }
-
-    // Собираем полноценный MP3-файл прямо в ОЗУ компьютера
-    const blob = new Blob(audioChunks, { type: 'audio/mp3' });
-    const blobURL = URL.createObjectURL(blob);
-
-    statusDiv.innerText = "РЕЖИМ: Воспроизведение вашей записи (1 мин)";
-    statusDiv.style.background = "#ffc107";
-    statusDiv.style.color = "#000";
-
-    // Подменяем источник звука на скачанный кусок
-    player.src = blobURL;
-    player.play().catch(e => console.log("Ошибка воспроизведения буфера"));
-
-    // Через 1 минуту (60000 мс) возвращаем живой эфир радио
-    setTimeout(() => {
-        startLiveRadio();
-    }, 60000);
-}
-
-// Посекундная проверка времени (настроено на тесты)
 function startTimelineChecking() {
     clearInterval(checkInterval);
     checkInterval = setInterval(() => {
@@ -129,21 +58,33 @@ function startTimelineChecking() {
         const m = now.getMinutes();
         const s = now.getSeconds();
 
-        // ТЕСТОВЫЙ ЦИКЛ: В 17:20:00 начинает тихо качать звук в память. Вы продолжаете слушать радио.
-        if (h === 17 && m === 20 && s === 0) {
-            startAudioBuffering();
-        }
-        
-        // В 17:23:00 запустится второй цикл
-        if (h === 17 && m === 23 && s === 0) {
-            startAudioBuffering();
-        }
-
-        // В 17:26:00 запустится третий цикл
-        if (h === 17 && m === 26 && s === 0) {
-            startAudioBuffering();
+        // Ровно в 01:00:00 ночи отключаем трансляцию и запускаем Архив (Часть 1)
+        if (h === 1 && m === 0 && s === 0) {
+            playArchivePart(1);
         }
     }, 1000);
+}
+
+function playArchivePart(partNumber) {
+    statusDiv.innerText = `РЕЖИМ: Трансляция окончена. Играет Архив, Часть ${partNumber}`;
+    statusDiv.style.background = "#ffc107";
+    statusDiv.style.color = "#000";
+
+    // Браузер загружает файл, который записал и сохранил облачный робот
+    player.src = `part_${partNumber}.mp3?v=${new Date().getTime()}`; // Очистка кэша
+    player.play().catch(e => console.log("Ошибка воспроизведения архива"));
+
+    // Когда первая часть (3.5 часа) закончится, автоматически включится вторая
+    player.onended = () => {
+        if (partNumber === 1) {
+            playArchivePart(2);
+        } else {
+            statusDiv.innerText = "РЕЖИМ: Архив полностью проигран. Ожидание дневного эфира.";
+            statusDiv.style.background = "#007bff";
+            statusDiv.style.color = "#fff";
+            player.onended = null;
+        }
+    };
 }
 </script>
 </body>
