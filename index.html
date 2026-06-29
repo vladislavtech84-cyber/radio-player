@@ -3,16 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер</title>
+    <title>Радиоплеер и Архив записей</title>
 </head>
 <body>
 
-    <h1>Радиоплеер</h1>
-    
-    <!-- Стандартный аудиоплеер с вашей ссылкой -->
+    <h1>Прямой эфир</h1>
+    <!-- Основной плеер радио -->
     <audio controls src="https://radio.5-tv.ru/radio.mp3">
         Ваш браузер не поддерживает аудиоэлемент.
     </audio>
+
+    <hr>
+
+    <h2>Архив записей</h2>
+    <!-- Сюда скрипт автоматически добавит плееры для каждого файла -->
+    <div id="records-list">Загрузка архива...</div>
+
+    <script>
+        // Автоматически определяем автора и имя репозитория из адреса сайта
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+        const repoName = pathParts[0] || ""; 
+        const username = window.location.hostname.split('.')[0];
+
+        // URL для получения списка файлов через GitHub API
+        const apiUrl = `https://github.com{username}/${repoName}/contents/`;
+
+        async function loadRecords() {
+            const listContainer = document.getElementById('records-list');
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) throw new Error('Не удалось загрузить список файлов');
+                
+                const files = await response.json();
+                
+                // Фильтруем файлы: оставляем только mp3, которые начинаются на "record_"
+                const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
+
+                if (mp3Files.length === 0) {
+                    listContainer.innerHTML = '<p>Записей пока нет.</p>';
+                    return;
+                }
+
+                // Очищаем текст загрузки
+                listContainer.innerHTML = '';
+
+                // Сортируем файлы по имени (новые будут вверху)
+                mp3Files.sort((a, b) => b.name.localeCompare(a.name));
+
+                // Создаем для каждого файла плеер
+                mp3Files.forEach(file => {
+                    const recordItem = document.createElement('div');
+                    recordItem.style.marginBottom = "20px";
+
+                    // Красиво форматируем имя файла для отображения даты
+                    const cleanName = file.name.replace('record_', '').replace('.mp3', '').replace('_', ' ').replace('-', ':');
+
+                    recordItem.innerHTML = `
+                        <p><strong>Запись от: ${cleanName}</strong></p>
+                        <audio controls src="${file.download_url}" preload="none"></audio>
+                    `;
+                    listContainer.appendChild(recordItem);
+                });
+
+            } catch (error) {
+                console.error(error);
+                listContainer.innerHTML = '<p>Ошибка при загрузке архива записей.</p>';
+            }
+        }
+
+        // Запускаем поиск файлов при загрузке страницы
+        loadRecords();
+    </script>
 
 </body>
 </html>
