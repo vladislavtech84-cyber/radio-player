@@ -20,64 +20,30 @@
     <!-- СЕКЦИЯ ПРЯМОГО ЭФИРА -->
     <div class="player-section">
         <h1>📻 Прямой эфир</h1>
-        <audio controls src="https://5-tv.ru"></audio> 
+        <!-- Ваша оригинальная ссылка, строго без изменений -->
+        <audio controls src="https://radio.5-tv.ru/radio.mp3"></audio> 
     </div>
 
     <!-- СЕКЦИЯ АРХИВА ЗАПИСЕЙ -->
     <div>
         <h2>📁 Архив программ</h2>
-        <div id="archive-list">Загрузка архива программ...</div>
+        <div id="archive-list">
+            
+            <!-- Прямой плеер для самой свежей записи №4 -->
+            <div class="track-item">
+                <div class="track-name">▶️ Тестовая запись №4</div>
+                <audio controls preload="none" src="record_1782662038.mp3"></audio>
+            </div>
+
+            <!-- Прямой плеер для записи №3 -->
+            <div class="track-item">
+                <div class="track-name">▶️ Тестовая запись №3</div>
+                <audio controls preload="none" src="record_1782660758.mp3"></audio>
+            </div>
+
+        </div>
     </div>
 </div>
-
-<script>
-    async function loadArchive() {
-        const listContainer = document.getElementById('archive-list');
-        
-        // Ссылка исправлена строго на ваш репозиторий radio-player без лишних пробелов
-        const url = "https://github.com" + new Date().getTime();
-
-        try {
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Не удалось загрузить список файлов');
-            
-            const files = await response.json();
-            const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
-
-            if (mp3Files.length === 0) {
-                listContainer.innerHTML = '<p style="text-align:center; color:#888;">Записей пока нет. Ожидаем работу таймера.</p>';
-                return;
-            }
-
-            listContainer.innerHTML = '';
-            mp3Files.sort((a, b) => b.name.localeCompare(a.name));
-
-            mp3Files.forEach((file, index) => {
-                const timestamp = file.name.replace('record_', '').replace('.mp3', '');
-                let formattedDate = `Запись радиопотока №${mp3Files.length - index}`;
-                
-                if (!isNaN(timestamp)) {
-                    const date = new Date(parseInt(timestamp) * 1000);
-                    formattedDate = `Программа от ${date.toLocaleDateString()} в ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
-                }
-
-                const trackDiv = document.createElement('div');
-                trackDiv.className = 'track-item';
-                trackDiv.innerHTML = `
-                    <div class="track-name">▶️ ${formattedDate}</div>
-                    <audio controls preload="none" src="${file.name}"></audio>
-                `;
-                listContainer.appendChild(trackDiv);
-            });
-
-        } catch (error) {
-            console.error(error);
-            listContainer.innerHTML = '<p style="text-align:center; color:#ff5555;">Ошибка при обновлении архива.</p>';
-        }
-    }
-
-    loadArchive();
-</script>
 
 </body>
 </html>
