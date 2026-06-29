@@ -1,27 +1,38 @@
-import urllib.request
+import requests
 import time
-import sys
+from datetime import datetime
 
-# URL вашего радиопотока
-STREAM_URL = "https://radio.5-tv.ru/radio.mp3" 
+# Ваша ссылка на радио (без изменений)
+STREAM_URL = "https://5-tv.ru"
 
-# Длительность записи: 1 час (3600 секунд)
-RECORD_DURATION = 60 
+# Длительность записи в секундах (8 часов = 8 * 60 * 60)
+RECORD_DURATION = 28800 
 
-OUTPUT_FILE = f"record_{int(time.time())}.mp3"
+# Имя файла с текущей датой и временем
+current_time = datetime.now().strftime("%Y-%m-%d_%H-%M")
+output_filename = f"record_{current_time}.mp3"
 
 print(f"Старт записи потока: {STREAM_URL}")
+print(f"Длительность: 8 часов. Файл: {output_filename}")
+
+start_time = time.time()
+
 try:
-    # Добавляем User-Agent, чтобы сервер радио не блокировал робота
-    req = urllib.request.Request(STREAM_URL, headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req) as response, open(OUTPUT_FILE, 'wb') as out_file:
-        start_time = time.time()
-        while time.time() - start_time < RECORD_DURATION:
-            chunk = response.read(1024)
-            if not chunk:
-                break
-            out_file.write(chunk)
-    print(f"Запись успешно сохранена как {OUTPUT_FILE}")
+    # Открываем поток для чтения
+    with requests.get(STREAM_URL, stream=True, timeout=15) as response:
+        response.raise_for_status()
+        
+        with open(output_filename, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                if chunk:
+                    f.write(chunk)
+                
+                # Проверяем, прошло ли 8 часов
+                if time.time() - start_time >= RECORD_DURATION:
+                    print("Время записи истекло.")
+                    break
+                    
+    print("Запись успешно завершена и сохранена.")
+
 except Exception as e:
-    print(f"Ошибка при записи: {e}")
-    sys.exit(1)
+    print(f"Произошла ошибка при записи: {e}")
