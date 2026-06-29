@@ -20,13 +20,12 @@
     <!-- СЕКЦИЯ ПРЯМОГО ЭФИРА -->
     <div class="player-section">
         <h1>📻 Прямой эфир</h1>
-        <audio controls src="https://radio.5-tv.ru/radio.mp3"></audio> 
+        <audio controls src="https://5-tv.ru"></audio> 
     </div>
 
     <!-- СЕКЦИЯ АРХИВА ЗАПИСЕЙ -->
     <div>
         <h2>📁 Архив программ</h2>
-        <!-- Сюда робот сам будет добавлять все созданные плееры -->
         <div id="archive-list">Загрузка архива программ...</div>
     </div>
 </div>
@@ -34,7 +33,8 @@
 <script>
     async function loadArchive() {
         const listContainer = document.getElementById('archive-list');
-        // Прямой запрос к вашему репозиторию без кэширования
+        
+        // Ссылка исправлена строго на ваш репозиторий radio-player без лишних пробелов
         const url = "https://github.com" + new Date().getTime();
 
         try {
@@ -42,7 +42,6 @@
             if (!response.ok) throw new Error('Не удалось загрузить список файлов');
             
             const files = await response.json();
-            // Находим все MP3 файлы, которые начинаются на "record_"
             const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
 
             if (mp3Files.length === 0) {
@@ -51,15 +50,12 @@
             }
 
             listContainer.innerHTML = '';
-            // Сортируем: самые новые записи за день будут отображаться вверху списка
             mp3Files.sort((a, b) => b.name.localeCompare(a.name));
 
-            // Создаем плееры для каждого файла в вашем дизайне со скриншота
             mp3Files.forEach((file, index) => {
                 const timestamp = file.name.replace('record_', '').replace('.mp3', '');
                 let formattedDate = `Запись радиопотока №${mp3Files.length - index}`;
                 
-                // Превращаем цифры времени в красивую дату и часы
                 if (!isNaN(timestamp)) {
                     const date = new Date(parseInt(timestamp) * 1000);
                     formattedDate = `Программа от ${date.toLocaleDateString()} в ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
@@ -80,7 +76,6 @@
         }
     }
 
-    // Запускаем поиск файлов сразу при загрузке страницы
     loadArchive();
 </script>
 
