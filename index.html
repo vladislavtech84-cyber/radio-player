@@ -35,8 +35,8 @@
     async function loadArchive() {
         const listContainer = document.getElementById('archive-list');
         
-        // ЗДЕСЬ ССЫЛКА ПРОПИСАНА НАПРЯМУЮ БЕЗ ОШИБОК И ПЕРЕМЕННЫХ
-        const url = "https://github.com" + new Date().getTime();
+        // Ссылка прописана строго на ваш репозиторий для получения файлов напрямую
+        const url = "https://github.com";
 
         try {
             const response = await fetch(url);
@@ -46,7 +46,7 @@
             const mp3Files = files.filter(file => file.name.endsWith('.mp3') && file.name.startsWith('record_'));
 
             if (mp3Files.length === 0) {
-                listContainer.innerHTML = '<p style="text-align:center;">Записей пока нет. Ждем работы таймера.</p>';
+                listContainer.innerHTML = '<p style="text-align:center; color:#aaa;">Записей пока нет. Ждем работы таймера.</p>';
                 return;
             }
 
