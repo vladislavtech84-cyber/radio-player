@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер — Тест фоновой записи</title>
+    <title>Радиоплеер — Тест 13:25</title>
 </head>
 <body>
 
@@ -11,7 +11,7 @@
     
     <p id="status" style="font-weight: bold; color: green;">Статус: Прямой эфир</p>
     
-    <!-- Основной плеер для пользователя -->
+    <!-- Главный плеер, который вы слушаете -->
     <audio id="audio-player" controls src="https://radio.5-tv.ru/radio.mp3"></audio>
 
     <script>
@@ -20,45 +20,43 @@
         
         const STREAM_URL = "https://5-tv.ru";
         
-        // === НАСТРОЙКА ТЕСТА ===
-        // Укажите время старта фоновой записи (например, 13:10)
+        // --- ТОЧНАЯ НАСТРОЙКА ВРЕМЕНИ ТЕСТА ---
         const TARGET_HOUR = 13;
-        const TARGET_MINUTE = 10;
-        
-        // Длительность записи в миллисекундах (5 минут = 300000)
-        // Для быстрого теста выставлено 15000 (15 секунд), чтобы сразу проверить переключение
-        const RECORD_TIME = 15000; 
+        const TARGET_MINUTE = 25;
+        // Длительность записи — ровно 5 минут (5 * 60 * 1000 = 300000 миллисекунд)
+        const RECORD_TIME = 300000; 
         
         let mediaRecorder;
         let audioChunks = [];
         let isRecorded = false;
 
-        // Таймер каждую секунду проверяет время на вашем компьютере
+        // Каждую секунду проверяем время на компьютере
         const timeCheckInterval = setInterval(() => {
             const now = new Date();
             if (now.getHours() === TARGET_HOUR && now.getMinutes() === TARGET_MINUTE && !isRecorded) {
                 isRecorded = true;
-                clearInterval(timeCheckInterval); // Выключаем проверку, запускаем тест
+                clearInterval(timeCheckInterval); // Выключаем проверку, запускаем процесс
                 startBackgroundRecording();
             }
         }, 1000);
 
         async function startBackgroundRecording() {
-            statusText.innerText = "Статус: Внимание! Началась фоновая запись (вы продолжаете слушать радио)...";
+            statusText.innerText = "Статус: Идет фоновая запись (5 минут)... Вы продолжаете слушать радио.";
             statusText.style.color = "orange";
 
             try {
-                // Создаем изолированный фоновый поток для записи, который не мешает основному плееру
+                // Создаем изолированную аудио-систему в памяти браузера для чистой записи
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
                 const streamDest = audioCtx.createMediaStreamDestination();
                 
+                // Создаем скрытый плеер, который будет качать поток для записи
                 const hiddenAudio = new Audio(STREAM_URL);
                 hiddenAudio.crossOrigin = "anonymous";
                 
                 const source = audioCtx.createMediaElementSource(hiddenAudio);
                 source.connect(streamDest);
                 
-                // Глушим звук скрытого плеера, чтобы не было эха (вы слышите только основной плеер)
+                // Глушим громкость скрытого плеера, чтобы не было эха (вы слышите только основной плеер)
                 hiddenAudio.volume = 0; 
                 hiddenAudio.play();
 
@@ -71,33 +69,33 @@
 
                 mediaRecorder.onstop = () => {
                     hiddenAudio.pause();
-                    statusText.innerText = "Статус: Запись завершена! Отключаем радио и включаем воспроизведение записи...";
+                    statusText.innerText = "Статус: Запись окончена! Включаем воспроизведение записи, радио отключено.";
                     statusText.style.color = "blue";
 
-                    // Создаем аудиофайл из записанных в памяти кусочков
+                    // Собираем записанные кусочки звука в один файл
                     const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
                     const audioUrl = URL.createObjectURL(audioBlob);
 
-                    // Переключаем основной плеер на воспроизведение созданной записи
+                    // Переключаем ваш плеер на этот файл и запускаем
                     audioPlayer.src = audioUrl;
                     audioPlayer.play();
 
-                    // Следим за окончанием проигрывания записи
+                    // Ждем, пока 5-минутная запись полностью доиграет
                     audioPlayer.onended = () => {
-                        statusText.innerText = "Статус: Запись доиграла. Возвращаем прямой эфир.";
+                        statusText.innerText = "Статус: Запись закончилась. Возвращаем прямой эфир.";
                         statusText.style.color = "green";
                         
-                        // Возвращаем поток радио и очищаем событие окончания
+                        // Возвращаем радиовещание назад
                         audioPlayer.src = STREAM_URL;
-                        audioPlayer.onended = null;
+                        audioPlayer.onended = null; // Очищаем событие
                         audioPlayer.play();
                     };
                 };
 
-                // Запуск процесса записи
+                // Стартуем запись
                 mediaRecorder.start();
 
-                // Автоматическая остановка записи по таймеру
+                // Ровно через 5 минут останавливаем запись
                 setTimeout(() => {
                     if (mediaRecorder && mediaRecorder.state === "recording") {
                         mediaRecorder.stop();
@@ -105,8 +103,8 @@
                 }, RECORD_TIME);
 
             } catch (err) {
-                console.error("Ошибка захвата потока:", err);
-                statusText.innerText = "Статус: Браузер заблокировал фоновую запись из-за CORS-политики.";
+                console.error("Ошибка фонового захвата:", err);
+                statusText.innerText = "Статус: Ошибка записи. Проверьте права CORS в браузере.";
                 statusText.style.color = "red";
             }
         }
