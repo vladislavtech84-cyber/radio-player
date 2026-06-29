@@ -21,7 +21,7 @@
     <!-- СЕКЦИЯ ПРЯМОГО ЭФИРА -->
     <div class="player-section">
         <h1>📻 Прямой эфир</h1>
-        <audio controls src="https://radio.5-tv.ru/radio.mp3"></audio> 
+        <audio controls src="https://5-tv.ru"></audio> 
     </div>
 
     <!-- СЕКЦИЯ АРХИВА ЗАПИСЕЙ -->
@@ -32,12 +32,11 @@
 </div>
 
 <script>
-    const GITHUB_USER = "vladislavtech84-cyber"; 
-    const REPO_NAME = "radio-player";
-
     async function loadArchive() {
         const listContainer = document.getElementById('archive-list');
-        const url = `https://github.com{GITHUB_USER}/${REPO_NAME}/contents/`;
+        
+        // ЗДЕСЬ ССЫЛКА ПРОПИСАНА НАПРЯМУЮ БЕЗ ОШИБОК И ПЕРЕМЕННЫХ
+        const url = "https://github.com" + new Date().getTime();
 
         try {
             const response = await fetch(url);
