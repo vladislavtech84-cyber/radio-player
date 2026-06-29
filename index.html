@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер — Автотест 14:10</title>
+    <title>Радиоплеер — Надежный тест</title>
 </head>
 <body>
 
     <h1>Радиоплеер</h1>
-    <p id="status" style="font-weight: bold; color: green;">Статус: Прямой эфир</p>
+    <p id="status" style="font-weight: bold; color: green;">Статус: Прямой эфир (Ожидаем готовности серверной записи...)</p>
     <audio id="audio-player" controls src="https://radio.5-tv.ru/radio.mp3"></audio>
 
     <script>
@@ -16,33 +16,60 @@
         const statusText = document.getElementById('status');
         const STREAM_URL = "https://radio.5-tv.ru/radio.mp3";
 
-        // Ссылка на файл через хостинг GitHub Pages (без CORS блокировок браузера)
+        // API для проверки реального времени обновления файла на сервере
+        const apiCheckUrl = "https://github.com";
+        // Прямая ссылка на файл для воспроизведения (с защитой от кэширования браузера)
         const RECORDED_FILE_URL = "https://github.io" + Date.now();
 
         let isPlayed = false;
+        let initialSha = null;
 
-        // Проверяем время каждую секунду
-        setInterval(() => {
-            const now = new Date();
-            const currentHour = now.getHours();
-            const currentMinute = now.getMinutes();
+        // При первом запуске запоминаем текущее состояние старого файла
+        async function getFileState() {
+            try {
+                const response = await fetch(apiCheckUrl);
+                if (response.ok) {
+                    const data = await response.json();
+                    return data.sha; // Уникальный маркер версии файла
+                }
+            } catch (e) { console.log("Файла еще нет"); }
+            return null;
+        }
 
-            // Сервер начнет писать в 14:10. В 14:15 запись завершится и файл обновится — включаем!
-            if (currentHour === 14 && currentMinute === 15 && !isPlayed) {
-                isPlayed = true;
-                playRecordedFile();
-            }
-        }, 1000);
+        async function init() {
+            initialSha = await getFileState();
+
+            // Каждые 10 секунд проверяем, изменился (обновился) ли файл на сервере
+            const checkInterval = setInterval(async () => {
+                if (isPlayed) return;
+
+                try {
+                    const response = await fetch(apiCheckUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        
+                        // Если файл появился впервые ИЛИ его старый маркер изменился (запись перезаписалась)
+                        if (initialSha === null || data.sha !== initialSha) {
+                            isPlayed = true;
+                            clearInterval(checkInterval);
+                            playRecordedFile();
+                        }
+                    }
+                } catch (err) {
+                    console.log("Ожидаем запись...");
+                }
+            }, 10000);
+        }
 
         function playRecordedFile() {
             statusText.innerText = "Статус: Серверная запись готова! Отключаем радио и включаем запись...";
             statusText.style.color = "blue";
 
-            // Загружаем обновленный аудиофайл со звуком
+            // Переключаем плеер на готовый файл со звуком
             audioPlayer.src = RECORDED_FILE_URL;
             audioPlayer.play();
 
-            // Когда 5-минутная запись полностью доиграет
+            // Когда запись полностью доиграет до конца
             audioPlayer.onended = () => {
                 statusText.innerText = "Статус: Прослушивание записи завершено. Возвращаем прямой эфир.";
                 statusText.style.color = "green";
@@ -52,6 +79,9 @@
                 audioPlayer.play();
             };
         }
+
+        // Запускаем систему слежения за файлом
+        init();
     </script>
 </body>
 </html>
