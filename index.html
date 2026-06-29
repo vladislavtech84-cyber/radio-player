@@ -2,86 +2,141 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Радиоплеер — Надежный тест</title>
+    <title>Радио Петербург с Таймером</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #f4f4f9; }
+        .container { max-width: 400px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        button { padding: 10px 20px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px; }
+        #status { margin-top: 20px; font-weight: bold; color: #555; }
+    </style>
 </head>
 <body>
 
-    <h1>Радиоплеер</h1>
-    <p id="status" style="font-weight: bold; color: green;">Статус: Прямой эфир (Ожидаем готовности серверной записи...)</p>
-    <audio id="audio-player" controls src="https://radio.5-tv.ru/radio.mp3"></audio>
+<div class="container">
+    <h2>Радио Петербург (5 канал)</h2>
+    <!-- Основной аудиоплеер -->
+    <audio id="radioPlayer" controls crossorigin="anonymous"></audio>
+    <br><br>
+    <button id="playBtn">Включить Радио</button>
+    <div id="status">Статус: Плеер остановлен</div>
+</div>
 
-    <script>
-        const audioPlayer = document.getElementById('audio-player');
-        const statusText = document.getElementById('status');
-        const STREAM_URL = "https://radio.5-tv.ru/radio.mp3";
+<script>
+// Ссылка на официальный поток Радио Петербург
+const STREAM_URL = "https://radio.5-tv.ru/radio.mp3"; 
 
-        // API для проверки реального времени обновления файла на сервере
-        const apiCheckUrl = "https://github.com";
-        // Прямая ссылка на файл для воспроизведения (с защитой от кэширования браузера)
-        const RECORDED_FILE_URL = "https://github.io" + Date.now();
+const player = document.getElementById('radioPlayer');
+const playBtn = document.getElementById('playBtn');
+const statusDiv = document.getElementById('status');
 
-        let isPlayed = false;
-        let initialSha = null;
+let mediaRecorder;
+let recordedChunks = [];
+let recordTimeout;
+let checkTimerInterval;
+let recordedAudioURL = null;
 
-        // При первом запуске запоминаем текущее состояние старого файла
-        async function getFileState() {
-            try {
-                const response = await fetch(apiCheckUrl);
-                if (response.ok) {
-                    const data = await response.json();
-                    return data.sha; // Уникальный маркер версии файла
-                }
-            } catch (e) { console.log("Файла еще нет"); }
-            return null;
+// Инициализация радио при клике (требование браузеров для автоплея)
+playBtn.addEventListener('click', () => {
+    if (player.paused) {
+        startLiveRadio();
+        playBtn.innerText = "Остановить Радио";
+        startTimerChecking(); // Запускаем ежесекундную проверку времени
+    } else {
+        player.pause();
+        playBtn.innerText = "Включить Радио";
+        statusDiv.innerText = "Статус: Плеер остановлен";
+        clearInterval(checkTimerInterval);
+    }
+});
+
+// Функция включения прямого эфира
+function startLiveRadio() {
+    player.src = STREAM_URL;
+    player.play().catch(e => console.log("Ошибка автоплея: ", e));
+    statusDiv.innerText = "Статус: В эфире прямой трансляции";
+}
+
+// Проверка времени каждую секунду
+function startTimerChecking() {
+    clearInterval(checkTimerInterval);
+    checkTimerInterval = setInterval(() => {
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+
+        // Проверяем наступление 16:25
+        if (hours === 16 && minutes === 25 && (!mediaRecorder || mediaRecorder.state === "inactive")) {
+            startBackgroundRecording();
         }
+    }, 1000);
+}
 
-        async function init() {
-            initialSha = await getFileState();
+// Фоновая запись потока БЕЗ прерывания текущего прослушивания
+function startBackgroundRecording() {
+    statusDiv.innerText = "Статус: Прямой эфир + Идет фоновая запись...";
+    recordedChunks = [];
 
-            // Каждые 10 секунд проверяем, изменился (обновился) ли файл на сервере
-            const checkInterval = setInterval(async () => {
-                if (isPlayed) return;
+    // Создаем отдельный аудио-объект в памяти для захвата данных потока
+    const recordAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const dest = recordAudioContext.createMediaStreamDestination();
+    
+    const hiddenAudio = new Audio(STREAM_URL);
+    hiddenAudio.crossOrigin = "anonymous";
+    
+    const source = recordAudioContext.createMediaElementSource(hiddenAudio);
+    source.connect(dest);
+    
+    // Запускаем скрытый поток для записи
+    hiddenAudio.play();
 
-                try {
-                    const response = await fetch(apiCheckUrl);
-                    if (response.ok) {
-                        const data = await response.json();
-                        
-                        // Если файл появился впервые ИЛИ его старый маркер изменился (запись перезаписалась)
-                        if (initialSha === null || data.sha !== initialSha) {
-                            isPlayed = true;
-                            clearInterval(checkInterval);
-                            playRecordedFile();
-                        }
-                    }
-                } catch (err) {
-                    console.log("Ожидаем запись...");
-                }
-            }, 10000);
+    // Настраиваем запись
+    mediaRecorder = new MediaRecorder(dest.stream);
+    
+    mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) recordedChunks.push(event.data);
+    };
+
+    mediaRecorder.onstop = () => {
+        // Создаем аудиофайл из записанных кусочков
+        const audioBlob = new Blob(recordedChunks, { type: 'audio/mp3' });
+        recordedAudioURL = URL.createObjectURL(audioBlob);
+        
+        // Останавливаем скрытое аудио
+        hiddenAudio.pause();
+        hiddenAudio.src = "";
+
+        // Шаг 2: Включаем запись, выключаем радио
+        playRecordedAudio();
+    };
+
+    // Запускаем запись
+    mediaRecorder.start();
+
+    // Ровно через 5 минут (300 000 мс) останавливаем запись
+    recordTimeout = setTimeout(() => {
+        if (mediaRecorder && mediaRecorder.state !== "inactive") {
+            mediaRecorder.stop();
         }
+    }, 5 * 60 * 1000); 
+}
 
-        function playRecordedFile() {
-            statusText.innerText = "Статус: Серверная запись готова! Отключаем радио и включаем запись...";
-            statusText.style.color = "blue";
+// Воспроизведение только что записанного фрагмента
+function playRecordedAudio() {
+    statusDiv.innerText = "Статус: Радио выключено. Играет записанный фрагмент (5 мин)";
+    
+    player.src = recordedAudioURL;
+    player.play();
 
-            // Переключаем плеер на готовый файл со звуком
-            audioPlayer.src = RECORDED_FILE_URL;
-            audioPlayer.play();
+    // Событие: как только запись полностью проиграется
+    player.onended = () => {
+        statusDiv.innerText = "Статус: Запись проиграна. Возврат к прямому эфиру...";
+        player.onended = null; // Сбрасываем триггер окончания
+        
+        // Шаг 3: Снова включаем радио на автомате
+        startLiveRadio();
+    };
+}
+</script>
 
-            // Когда запись полностью доиграет до конца
-            audioPlayer.onended = () => {
-                statusText.innerText = "Статус: Прослушивание записи завершено. Возвращаем прямой эфир.";
-                statusText.style.color = "green";
-                
-                audioPlayer.src = STREAM_URL;
-                audioPlayer.onended = null;
-                audioPlayer.play();
-            };
-        }
-
-        // Запускаем систему слежения за файлом
-        init();
-    </script>
 </body>
 </html>
