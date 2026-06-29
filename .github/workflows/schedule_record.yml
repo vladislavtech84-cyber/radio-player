@@ -2,9 +2,9 @@ name: Record Radio Schedule
 
 on:
   schedule:
-    # Запуск ровно в 13:50 по МСК (10:50 по UTC)
-    - cron: '50 10 * * *'
-  workflow_dispatch:
+    # Автоматический запуск ровно в 14:10 по Московскому времени (11:10 UTC)
+    - cron: '10 11 * * *'
+  workflow_dispatch: # Кнопка ручного запуска на всякий случай
 
 jobs:
   record:
@@ -32,5 +32,5 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@://github.com"
         git add test_record.mp3
-        git commit -m "Test record at 13:50" || echo "No changes"
+        git commit -m "Automated test record at 14:10" || echo "No changes"
         git push
