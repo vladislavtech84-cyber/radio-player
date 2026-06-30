@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест 18:55 Радио</title>
+    <title>Тест 19:20 Без Кэша</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
@@ -13,7 +13,7 @@
 <body>
 
 <div class="container">
-    <h2>Тест: Радио Петербург (Старт в 18:55)</h2>
+    <h2>Тест: Радио Петербург (Старт в 19:20)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     <button id="playBtn">Включить Радио</button>
@@ -56,7 +56,7 @@ function startLiveRadio() {
 function stopEverything() {
     player.pause();
     player.src = "";
-    playBtn.innerText = "Включить Радио";
+    playBtn.innerText = "Включить Radio";
     playBtn.style.background = "#28a745";
     statusDiv.innerText = "Статус: Остановлено";
     statusDiv.style.background = "#6c757d";
@@ -70,35 +70,28 @@ function startTimelineChecking() {
         const h = now.getHours();
         const m = now.getMinutes();
 
-        // С 18:55 до 19:04 показываем статус записи в облаке
-        if (h === 18 && m >= 55 && !isArchivePlaying) {
-            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub началась запись...]";
-            statusDiv.style.background = "#007bff";
-        }
-        
-        if (h === 19 && m < 5 && !isArchivePlaying) {
-            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub началась запись...]";
+        // С 19:20 до 19:29 информируем о фоновой записи файла part_1930.mp3
+        if (h === 19 && m >= 20 && m < 30 && !isArchivePlaying) {
+            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub пишется файл part_1930.mp3...]";
             statusDiv.style.background = "#007bff";
         }
 
-        // Начиная с 19:05 ждем готовности файла и включаем его
-        if (h === 19 && m >= 5 && !isArchivePlaying && !forceReturnedToLive) {
-            checkAndPlayArchive();
+        // В 19:30 запись завершена. Начинаем искать файл part_1930.mp3
+        if (h === 19 && m >= 30 && !isArchivePlaying && !forceReturnedToLive) {
+            checkAndPlayArchive("1930"); 
         }
 
-        // ЖЕСТКИЙ ТАЙМЕР ВОЗВРАТА: Ровно в 19:17 принудительно возвращаем эфир радио
-        if (((h === 19 && m >= 17) || h > 19) && !forceReturnedToLive) {
+        // В 19:42 жесткий возврат к радио по часам
+        if (((h === 19 && m >= 42) || h > 19) && !forceReturnedToLive) {
             forceReturnedToLive = true;
-            console.log("Время вышло! Жесткий возврат к радио по часам.");
             startLiveRadio();
         }
     }, 1000);
 }
 
-async function checkAndPlayArchive() {
-    // Обходим кэш с помощью временной метки, чтобы загрузить свежезаписанный файл
-    const fileUrl = `part_1.mp3?v=${new Date().getTime()}`;
-    statusDiv.innerText = "РЕЖИМ: Ожидание публикации новой записи от GitHub...";
+async function checkAndPlayArchive(timeLabel) {
+    const fileUrl = `part_${timeLabel}.mp3`;
+    statusDiv.innerText = `РЕЖИМ: Ожидание публикации файла ${fileUrl} от GitHub...`;
     statusDiv.style.background = "#ffc107";
     statusDiv.style.color = "#000";
 
@@ -106,7 +99,7 @@ async function checkAndPlayArchive() {
         const response = await fetch(fileUrl, { method: 'HEAD' });
         if (response.ok) {
             isArchivePlaying = true;
-            statusDiv.innerText = "РЕЖИМ: Запись найдена! Воспроизведение новой записи (10 мин)";
+            statusDiv.innerText = `РЕЖИМ: Воспроизведение НОВОЙ записи (${fileUrl})`;
             statusDiv.style.background = "#6f42c1";
             statusDiv.style.color = "#fff";
             
@@ -116,7 +109,7 @@ async function checkAndPlayArchive() {
             player.play();
         }
     } catch (e) {
-        console.log("Ожидание файла...");
+        console.log("Ожидание публикации...");
     }
 }
 </script>
