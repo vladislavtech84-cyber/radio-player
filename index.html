@@ -2,85 +2,57 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Радио Петербург — Архив и Эфир</title>
+    <title>Тест 10 минут: Эфир и Запись</title>
     <style>
-        body { font-family: sans-serif; text-align: center; padding-top: 40px; background: #1a1a2e; color: #fff; }
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
-        button { padding: 12px 20px; font-size: 15px; cursor: pointer; color: white; border: none; border-radius: 6px; font-weight: bold; margin: 5px; transition: 0.2s; }
-        .btn-live { background: #28a745; }
-        .btn-live:hover { background: #218838; }
-        .btn-archive { background: #007bff; }
-        .btn-archive:hover { background: #0069d9; }
-        .btn-stop { background: #dc3545; }
-        .btn-stop:hover { background: #c82333; }
+        button { padding: 12px 24px; font-size: 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; }
         #status { margin-top: 25px; font-size: 16px; font-weight: bold; padding: 15px; background: #6c757d; border-radius: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Радио Петербург (5 канал)</h2>
+    <h2>Тест: Радио Петербург (10 минут)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
-    
-    <!-- Кнопки управления -->
-    <button class="btn-live" id="liveBtn">Прямой Эфир</button>
-    <button class="btn-archive" id="part1Btn">Архив: Часть 1</button>
-    <button class="btn-archive" id="part2Btn">Архив: Часть 2</button>
-    <button class="btn-stop" id="stopBtn">Стоп</button>
-    
-    <div id="status">Статус: Плеер остановлен</div>
+    <button id="playBtn">Включить Радио</button>
+    <div id="status">Статус: Остановлено</div>
 </div>
 
 <script>
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3"; 
-
 const player = document.getElementById('mainPlayer');
-const liveBtn = document.getElementById('liveBtn');
-const part1Btn = document.getElementById('part1Btn');
-const part2Btn = document.getElementById('part2Btn');
-const stopBtn = document.getElementById('stopBtn');
+const playBtn = document.getElementById('playBtn');
 const statusDiv = document.getElementById('status');
 
 let checkInterval;
+let isArchivePlaying = false;
 
-// Кнопка: Прямой эфир
-liveBtn.addEventListener('click', () => {
-    startLiveRadio();
-    startTimelineChecking(); // Включаем слежение за временем 01:00
-});
-
-// Кнопка: Архив Часть 1 (ручной запуск)
-part1Btn.addEventListener('click', () => {
-    clearInterval(checkInterval);
-    playArchivePart(1);
-});
-
-// Кнопка: Архив Часть 2 (ручной запуск)
-part2Btn.addEventListener('click', () => {
-    clearInterval(checkInterval);
-    playArchivePart(2);
-});
-
-// Кнопка: Стоп
-stopBtn.addEventListener('click', () => {
-    player.pause();
-    player.src = "";
-    statusDiv.innerText = "Статус: Плеер остановлен";
-    statusDiv.style.background = "#6c757d";
-    statusDiv.style.color = "#fff";
-    clearInterval(checkInterval);
+playBtn.addEventListener('click', () => {
+    if (player.paused) {
+        startLiveRadio();
+        playBtn.innerText = "Остановить";
+        playBtn.style.background = "#dc3545";
+        startTimelineChecking();
+    } else {
+        player.pause();
+        playBtn.innerText = "Включить Радио";
+        playBtn.style.background = "#28a745";
+        statusDiv.innerText = "Статус: Остановлено";
+        statusDiv.style.background = "#6c757d";
+        clearInterval(checkInterval);
+    }
 });
 
 function startLiveRadio() {
+    isArchivePlaying = false;
     player.src = LIVE_STREAM;
     player.play().catch(e => console.log("Нажмите играть"));
     statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
     statusDiv.style.background = "#28a745";
-    statusDiv.style.color = "#fff";
 }
 
-// Автоматическое переключение в 01:00 ночи
 function startTimelineChecking() {
     clearInterval(checkInterval);
     checkInterval = setInterval(() => {
@@ -89,36 +61,40 @@ function startTimelineChecking() {
         const m = now.getMinutes();
         const s = now.getSeconds();
 
-        // Если вы оставили плеер включенным ночью, в 01:00:00 он сам переключится на запись
-        if (h === 1 && m === 0 && s === 0) {
-            playArchivePart(1);
+        // С 12:40 до 12:49 просто меняем текст статуса (в это время GitHub пишет файл в облаке)
+        if (h === 12 && m >= 40 && m < 50 && !isArchivePlaying) {
+            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub идет запись...]";
+            statusDiv.style.background = "#007bff";
+        }
+
+        // Ровно в 12:50:00 выключаем эфир и запускаем только что созданную запись
+        if (h === 12 && m === 50 && s === 0 && !isArchivePlaying) {
+            playRecordedArchive();
         }
     }, 1000);
 }
 
-function playArchivePart(partNumber) {
-    statusDiv.innerText = `РЕЖИМ: Играет Архив, Часть ${partNumber} (Запись от 18:00)`;
+function playRecordedArchive() {
+    isArchivePlaying = true;
+    statusDiv.innerText = "РЕЖИМ: Эфир отключен. Воспроизведение записи (10 мин)";
     statusDiv.style.background = "#ffc107";
     statusDiv.style.color = "#000";
 
-    // Загружаем файл из репозитория с защитой от кэширования браузера
-    player.src = `part_${partNumber}.mp3?v=${new Date().getTime()}`; 
+    // Подгружаем свежий файл с сервера GitHub
+    player.src = `part_1.mp3?v=${new Date().getTime()}`;
     player.play().catch(e => {
-        statusDiv.innerText = `Ошибка: Файл part_${partNumber}.mp3 еще не записан роботом на GitHub`;
+        statusDiv.innerText = "Ошибка: Файл еще загружается на сервер GitHub. Подождите 30 сек...";
         statusDiv.style.background = "#dc3545";
         statusDiv.style.color = "#fff";
+        // Если GitHub опоздал с пушем файла, пробуем включить еще раз через 20 секунд
+        setTimeout(playRecordedArchive, 20000);
     });
 
-    // Автопереход с 1-й части на 2-ю
+    // Ровно через 10 минут (в 13:00) возвращаем радио на автомате
     player.onended = () => {
-        if (partNumber === 1) {
-            playArchivePart(2);
-        } else {
-            statusDiv.innerText = "РЕЖИМ: Весь архив полностью проигран.";
-            statusDiv.style.background = "#007bff";
-            statusDiv.style.color = "#fff";
-            player.onended = null;
-        }
+        statusDiv.innerText = "РЕЖИМ: Запись окончена. Авто-возврат в эфир.";
+        player.onended = null;
+        startLiveRadio();
     };
 }
 </script>
