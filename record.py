@@ -3,8 +3,8 @@ import time
 import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
-# Время записи жестко задано: 120 секунд (2 минуты)
-RECORD_DURATION = 120
+# Время записи жестко задано: 600 секунд (10 минут)
+RECORD_DURATION = 600
 filename = "part_1.mp3"
 
 print(f"Запуск записи в облаке. Файл: {filename}, Длительность: {RECORD_DURATION} сек.")
@@ -22,7 +22,7 @@ try:
             if not chunk:
                 break
             out_file.write(chunk)
-    print("Файл успешно записан и сформирован!")
+    print("Файл успешно записан!")
 except Exception as e:
-    print(f"Критическая ошибка при записи: {e}")
+    print(f"Критическая ошибка: {e}")
     sys.exit(1)
