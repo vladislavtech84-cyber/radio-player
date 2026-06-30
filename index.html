@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест 13:05 Радио</title>
+    <title>Тест 18:00 Радио</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
@@ -13,7 +13,7 @@
 <body>
 
 <div class="container">
-    <h2>Тест: Радио Петербург (Старт в 13:05)</h2>
+    <h2>Тест: Радио Петербург (Старт в 18:00)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     <button id="playBtn">Включить Радио</button>
@@ -61,14 +61,14 @@ function startTimelineChecking() {
         const h = now.getHours();
         const m = now.getMinutes();
 
-        // С 13:05 до 13:14 меняем только статус информирования
-        if (h === 13 && m >= 5 && m < 15 && !isArchivePlaying) {
+        // С 18:00 до 18:01 показываем статус записи в облаке
+        if (h === 18 && m >= 0 && m < 2 && !isArchivePlaying) {
             statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub началась запись...]";
             statusDiv.style.background = "#007bff";
         }
 
-        // Начиная с 13:15 ждем готовности файла
-        if (h === 13 && m >= 15 && !isArchivePlaying) {
+        // Начиная с 18:02 ждем готовности файла
+        if (h === 18 && m >= 2 && !isArchivePlaying) {
             checkAndPlayArchive();
         }
     }, 1000);
@@ -84,7 +84,7 @@ async function checkAndPlayArchive() {
         const response = await fetch(fileUrl, { method: 'HEAD' });
         if (response.ok) {
             isArchivePlaying = true;
-            statusDiv.innerText = "РЕЖИМ: Запись найдена! Воспроизведение архива (10 мин)";
+            statusDiv.innerText = "РЕЖИМ: Запись найдена! Воспроизведение архива (2 мин)";
             statusDiv.style.background = "#6f42c1";
             statusDiv.style.color = "#fff";
             
