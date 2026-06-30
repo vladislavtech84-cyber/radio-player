@@ -3,14 +3,15 @@ import time
 import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
-RECORD_DURATION = int(sys.argv) if len(sys.argv) > 1 else 600
+# Время записи жестко задано: 120 секунд (2 минуты)
+RECORD_DURATION = 120
 filename = "part_1.mp3"
 
-print(f"Запись запущена в облаке. Файл: {filename}, Длительность: {RECORD_DURATION} сек.")
+print(f"Запуск записи в облаке. Файл: {filename}, Длительность: {RECORD_DURATION} сек.")
 
 req = urllib.request.Request(
     STREAM_URL, 
-    headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
 )
 
 try:
@@ -21,7 +22,7 @@ try:
             if not chunk:
                 break
             out_file.write(chunk)
-    print("Файл успешно записан!")
+    print("Файл успешно записан и сформирован!")
 except Exception as e:
-    print(f"Ошибка: {e}")
+    print(f"Критическая ошибка при записи: {e}")
     sys.exit(1)
