@@ -3,7 +3,6 @@ import time
 import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
-# Время записи жестко задано: 600 секунд (10 минут)
 RECORD_DURATION = 600
 filename = "part_1.mp3"
 
