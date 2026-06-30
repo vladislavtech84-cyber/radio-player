@@ -22,9 +22,10 @@
 
 <script>
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3"; 
-// Автоматически определяем имя пользователя и репозиторий из ссылки сайта
-const RepoURL = window.location.pathname.split('/')[1];
-const UserURL = window.location.hostname.split('.')[0];
+
+// Точное и жесткое указание вашего репозитория для поиска файлов
+const GITHUB_USER = "vladislavtech84-cyber";
+const GITHUB_REPO = "radio-player";
 
 const player = document.getElementById('mainPlayer');
 const playBtn = document.getElementById('playBtn');
@@ -68,64 +69,50 @@ function stopEverything() {
 function startTimelineChecking() {
     clearInterval(checkInterval);
     checkInterval = setInterval(() => {
-        const now = new Date();
-        const h = now.getHours();
-        const m = now.getMinutes();
-
-        // Время проверки: если наступило время после записи, ищем самый свежий mp3 файл в репозитории
-        if ((h === 19 && m >= 30) || h > 19) {
-            if (!isArchivePlaying) {
-                findAndPlayLatestArchive();
-            }
-        } else {
-            // В остальное время просто информируем
-            if (h === 19 && m < 30) {
-                statusDiv.innerText = "РЕЖИМ: Прямой эфир. Ожидание завершения записи в облаке...";
-                statusDiv.style.background = "#007bff";
-            }
+        // Каждые 5 секунд проверяем репозиторий на наличие файлов
+        if (!isArchivePlaying) {
+            findAndPlayLatestArchive();
         }
-    }, 5000); // Проверяем раз в 5 секунд, чтобы не спамить сервер
+    }, 5000); 
 }
 
-// Умная функция: обращается к GitHub API, находит самый новый файл part_*.mp3 и включает его
+// Умная функция: запрашивает список файлов у GitHub API, находит самый свежий part_*.mp3 и запускает его
 async function findAndPlayLatestArchive() {
-    statusDiv.innerText = "РЕЖИМ: Сканирование репозитория в поиске свежей записи...";
-    statusDiv.style.background = "#ffc107";
-    statusDiv.style.color = "#000";
-
     try {
-        // Запрашиваем список файлов напрямую у GitHub API
-        const response = await fetch(`https://github.com{UserURL}/${RepoURL}/contents/`);
+        const response = await fetch(`https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/`);
         if (!response.ok) return;
         
         const files = await response.json();
-        // Фильтруем только наши файлы записей part_*.mp3
+        // Фильтруем файлы, которые начинаются на part_ и заканчиваются на .mp3
         const mp3Files = files.filter(f => f.name.startsWith('part_') && f.name.endsWith('.mp3'));
         
         if (mp3Files.length > 0) {
-            // Сортируем и берем самый последний созданный файл
+            // Сортируем по имени, чтобы взять самый последний (например part_1930.mp3)
             mp3Files.sort((a, b) => b.name.localeCompare(a.name));
             const latestFile = mp3Files[0].name;
 
             isArchivePlaying = true;
-            statusDiv.innerText = `РЕЖИМ: Воспроизведение найденной записи (${latestFile})`;
-            statusDiv.style.background = "#6f42c1";
+            statusDiv.innerText = `РЕЖИМ: Найдена свежая запись (${latestFile}). Воспроизведение...`;
+            statusDiv.style.background = "#6f42c1"; // Фиолетовый статус архива
             statusDiv.style.color = "#fff";
             
             player.removeAttribute('src');
             player.load();
-            // Запускаем этот файл
+            // Подключаем файл напрямую из GitHub Pages с обходом кэша
             player.src = `${latestFile}?v=${new Date().getTime()}`;
-            player.play();
+            player.play().catch(e => console.log("Ошибка воспроизведения файла"));
 
-            // По окончании записи (через 10 минут) — автоматический возврат на радио
+            // Как только запись доиграет до конца — плеер сам вернет вас в прямой эфир радио
             player.onended = () => {
                 player.onended = null;
                 startLiveRadio();
             };
+        } else {
+            statusDiv.innerText = "РЕЖИМ: Живой эфир. Записей в репозитории пока не найдено...";
+            statusDiv.style.background = "#007bff";
         }
     } catch (e) {
-        console.log("Ошибка поиска файла в репозитории");
+        console.log("Ошибка запроса к GitHub API");
     }
 }
 </script>
