@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест 18:00 Радио</title>
+    <title>Тест 18:25 Радио</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
@@ -13,7 +13,7 @@
 <body>
 
 <div class="container">
-    <h2>Тест: Радио Петербург (Старт в 18:00)</h2>
+    <h2>Тест: Радио Петербург (Старт в 18:25)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     <button id="playBtn">Включить Радио</button>
@@ -36,22 +36,29 @@ playBtn.addEventListener('click', () => {
         playBtn.style.background = "#dc3545";
         startTimelineChecking();
     } else {
-        player.pause();
-        playBtn.innerText = "Включить Радио";
-        playBtn.style.background = "#28a745";
-        statusDiv.innerText = "Статус: Остановлено";
-        statusDiv.style.background = "#6c757d";
-        clearInterval(checkInterval);
+        stopEverything();
     }
 });
 
 function startLiveRadio() {
     isArchivePlaying = false;
+    player.onended = null; // Полностью сбрасываем слежение
     player.src = LIVE_STREAM;
+    player.load(); // Жестко перезагружаем плеер на живой поток
     player.play().catch(e => console.log("Нажмите играть"));
     statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
     statusDiv.style.background = "#28a745";
     statusDiv.style.color = "#fff";
+}
+
+function stopEverything() {
+    player.pause();
+    player.src = "";
+    playBtn.innerText = "Включить Радио";
+    playBtn.style.background = "#28a745";
+    statusDiv.innerText = "Статус: Остановлено";
+    statusDiv.style.background = "#6c757d";
+    clearInterval(checkInterval);
 }
 
 function startTimelineChecking() {
@@ -61,14 +68,14 @@ function startTimelineChecking() {
         const h = now.getHours();
         const m = now.getMinutes();
 
-        // С 18:00 до 18:01 показываем статус записи в облаке
-        if (h === 18 && m >= 0 && m < 2 && !isArchivePlaying) {
+        // С 18:25 до 18:34 выводится статус записи в облаке
+        if (h === 18 && m >= 25 && m < 35 && !isArchivePlaying) {
             statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub началась запись...]";
             statusDiv.style.background = "#007bff";
         }
 
-        // Начиная с 18:02 ждем готовности файла
-        if (h === 18 && m >= 2 && !isArchivePlaying) {
+        // Начиная с 18:35 ищем файл
+        if (h === 18 && m >= 35 && !isArchivePlaying) {
             checkAndPlayArchive();
         }
     }, 1000);
@@ -84,20 +91,22 @@ async function checkAndPlayArchive() {
         const response = await fetch(fileUrl, { method: 'HEAD' });
         if (response.ok) {
             isArchivePlaying = true;
-            statusDiv.innerText = "РЕЖИМ: Запись найдена! Воспроизведение архива (2 мин)";
+            statusDiv.innerText = "РЕЖИМ: Запись найдена! Воспроизведение архива (10 мин)";
             statusDiv.style.background = "#6f42c1";
             statusDiv.style.color = "#fff";
             
             player.src = fileUrl;
+            player.load();
             player.play();
 
+            // Жесткий принудительный триггер на окончание записи
             player.onended = () => {
-                player.onended = null;
+                console.log("Запись доиграла. Принудительно возвращаем радио.");
                 startLiveRadio();
             };
         }
     } catch (e) {
-        console.log("Файл еще не обновился на сервере");
+        console.log("Файл еще обновляется...");
     }
 }
 </script>
