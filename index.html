@@ -7,13 +7,13 @@
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
         button { padding: 12px 24px; font-size: 16px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 6px; font-weight: bold; }
-        #status { margin-top: 25px; font-size: 16px; font-weight: bold; padding: 15px; background: #6c757d; border-radius: 6px; }
+        #status { margin-top: 25px; font-size: 16px; font-weight: bold; padding: 15px; background: #6c757d; border-radius: 6px; transition: 0.3s; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Тест: Радио Петербург (10 минут)</h2>
+    <h2>Тест: Радио Петербург (Умный Таймер)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     <button id="playBtn">Включить Радио</button>
@@ -51,6 +51,7 @@ function startLiveRadio() {
     player.play().catch(e => console.log("Нажмите играть"));
     statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
     statusDiv.style.background = "#28a745";
+    statusDiv.style.color = "#fff";
 }
 
 function startTimelineChecking() {
@@ -61,41 +62,54 @@ function startTimelineChecking() {
         const m = now.getMinutes();
         const s = now.getSeconds();
 
-        // С 12:40 до 12:49 просто меняем текст статуса (в это время GitHub пишет файл в облаке)
+        // С 12:40 до 12:49 показываем, что идет процесс в облаке
         if (h === 12 && m >= 40 && m < 50 && !isArchivePlaying) {
-            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub идет запись...]";
+            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub запущена запись...]";
             statusDiv.style.background = "#007bff";
         }
 
-        // Ровно в 12:50:00 выключаем эфир и запускаем только что созданную запись
-        if (h === 12 && m === 50 && s === 0 && !isArchivePlaying) {
-            playRecordedArchive();
+        // В 12:50 запускаем умную проверку файла
+        if (h === 12 && m >= 50 && !isArchivePlaying) {
+            tryToPlayArchive();
         }
     }, 1000);
 }
 
-function playRecordedArchive() {
-    isArchivePlaying = true;
-    statusDiv.innerText = "РЕЖИМ: Эфир отключен. Воспроизведение записи (10 мин)";
+// Умная функция: проверяет файл, если его нет — ждет и пробует снова, не прерывая радио
+async function tryToPlayArchive() {
+    const fileUrl = `part_1.mp3?v=${new Date().getTime()}`;
+    
+    statusDiv.innerText = "РЕЖИМ: Ожидание файла от GitHub Actions (может быть задержка сервера)...";
     statusDiv.style.background = "#ffc107";
     statusDiv.style.color = "#000";
 
-    // Подгружаем свежий файл с сервера GitHub
-    player.src = `part_1.mp3?v=${new Date().getTime()}`;
-    player.play().catch(e => {
-        statusDiv.innerText = "Ошибка: Файл еще загружается на сервер GitHub. Подождите 30 сек...";
-        statusDiv.style.background = "#dc3545";
-        statusDiv.style.color = "#fff";
-        // Если GitHub опоздал с пушем файла, пробуем включить еще раз через 20 секунд
-        setTimeout(playRecordedArchive, 20000);
-    });
+    try {
+        // Проверяем, существует ли файл физически на сервере GitHub
+        const response = await fetch(fileUrl, { method: 'HEAD' });
+        
+        if (response.ok) {
+            // Файл найден! Делаем рокировку звука
+            isArchivePlaying = true;
+            statusDiv.innerText = "РЕЖИМ: Запись успешно загружена! Играет архив (10 мин)";
+            statusDiv.style.background = "#6f42c1"; // Фиолетовый статус для архива
+            statusDiv.style.color = "#fff";
+            
+            player.src = fileUrl;
+            player.play();
 
-    // Ровно через 10 минут (в 13:00) возвращаем радио на автомате
-    player.onended = () => {
-        statusDiv.innerText = "РЕЖИМ: Запись окончена. Авто-возврат в эфир.";
-        player.onended = null;
-        startLiveRadio();
-    };
+            // По окончании файла — возврат в эфир
+            player.onended = () => {
+                player.onended = null;
+                startLiveRadio();
+            };
+        } else {
+            // Файла еще нет (GitHub задерживает пуш), оставляем радио играть и пишем инфо
+            statusDiv.innerText = "GitHub еще не сохранил файл. Радио продолжит играть до появления записи...";
+            statusDiv.style.background = "#bc8f8f";
+        }
+    } catch (e) {
+        console.log("Ожидание файла...");
+    }
 }
 </script>
 </body>
