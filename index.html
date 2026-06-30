@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Радио Петербург — Автоматика</title>
+    <title>Тест 21:45 Радио</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
@@ -13,7 +13,7 @@
 <body>
 
 <div class="container">
-    <h2>Радио Петербург (Умный Поиск Записи)</h2>
+    <h2>Тест: Радио Петербург (Старт в 21:45)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     <button id="playBtn">Включить Радио</button>
@@ -22,20 +22,17 @@
 
 <script>
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3"; 
-
-// Точные данные вашего репозитория
-const GITHUB_USER = "vladislavtech84-cyber";
-const GITHUB_REPO = "radio-player";
-
 const player = document.getElementById('mainPlayer');
 const playBtn = document.getElementById('playBtn');
 const statusDiv = document.getElementById('status');
 
 let checkInterval;
 let isArchivePlaying = false;
+let forceReturnedToLive = false;
 
 playBtn.addEventListener('click', () => {
     if (player.paused) {
+        forceReturnedToLive = false;
         startLiveRadio();
         playBtn.innerText = "Остановить";
         playBtn.style.background = "#dc3545";
@@ -59,7 +56,7 @@ function startLiveRadio() {
 function stopEverything() {
     player.pause();
     player.src = "";
-    playBtn.innerText = "Включить Радио";
+    playBtn.innerText = "Включить Radio";
     playBtn.style.background = "#28a745";
     statusDiv.innerText = "Статус: Остановлено";
     statusDiv.style.background = "#6c757d";
@@ -69,48 +66,51 @@ function stopEverything() {
 function startTimelineChecking() {
     clearInterval(checkInterval);
     checkInterval = setInterval(() => {
-        // Проверяем репозиторий каждые 5 секунд
-        if (!isArchivePlaying) {
-            findAndPlayLatestArchive();
+        const now = new Date();
+        const h = now.getHours();
+        const m = now.getMinutes();
+
+        // С 21:45 до 21:54 показываем статус записи в облаке
+        if (h === 21 && m >= 45 && m < 55 && !isArchivePlaying) {
+            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub началась запись...]";
+            statusDiv.style.background = "#007bff";
         }
-    }, 5000); 
+
+        // Начиная с 21:55 ждем готовности файла и включаем его
+        if (h === 21 && m >= 55 && !isArchivePlaying && !forceReturnedToLive) {
+            checkAndPlayArchive();
+        }
+
+        // ЖЕСТКИЙ ТАЙМЕР ВОЗВРАТА: Ровно в 22:07 принудительно возвращаем эфир радио по часам
+        if (((h === 22 && m >= 7) || h > 22) && !forceReturnedToLive) {
+            forceReturnedToLive = true;
+            startLiveRadio();
+        }
+    }, 1000);
 }
 
-async function findAndPlayLatestArchive() {
-    try {
-        const response = await fetch(`https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/`);
-        if (!response.ok) return;
-        
-        const files = await response.json();
-        // Находим все файлы, имя которых начинается с part_
-        const mp3Files = files.filter(f => f.name.startsWith('part_') && f.name.endsWith('.mp3'));
-        
-        if (mp3Files.length > 0) {
-            // Сортируем список файлов по имени (последний окажется сверху)
-            mp3Files.sort((a, b) => b.name.localeCompare(a.name));
-            
-            // ИСПРАВЛЕНО: Берём имя ПЕРВОГО файла из отсортированного списка
-            const latestFileName = mp3Files[0].name; 
+async function checkAndPlayArchive() {
+    // Каждую секунду обманываем кэш CDN с помощью временной метки, ища свежий файл part_1.mp3
+    const fileUrl = `part_1.mp3?v=${new Date().getTime()}`;
+    statusDiv.innerText = "РЕЖИМ: Ожидание публикации файла part_1.mp3 от GitHub...";
+    statusDiv.style.background = "#ffc107";
+    statusDiv.style.color = "#000";
 
+    try {
+        const response = await fetch(fileUrl, { method: 'HEAD' });
+        if (response.ok) {
             isArchivePlaying = true;
-            statusDiv.innerText = `РЕЖИМ: Воспроизведение записи (${latestFileName})`;
-            statusDiv.style.background = "#6f42c1"; // Меняем статус на фиолетовый архива
+            statusDiv.innerText = "РЕЖИМ: Запись найдена! Воспроизведение архива (10 мин)";
+            statusDiv.style.background = "#6f42c1";
             statusDiv.style.color = "#fff";
             
             player.removeAttribute('src');
             player.load();
-            // Подставляем прямую ссылку на файл в GitHub Pages
-            player.src = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}/${latestFileName}?v=${new Date().getTime()}`;
-            player.play().catch(e => console.log("Ошибка воспроизведения аудиофайла"));
-
-            // После окончания проигрывания записи — автоматический возврат к радио
-            player.onended = () => {
-                player.onended = null;
-                startLiveRadio();
-            };
+            player.src = fileUrl;
+            player.play();
         }
     } catch (e) {
-        console.log("Ошибка работы с GitHub API");
+        console.log("Ожидание файла...");
     }
 }
 </script>
