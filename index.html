@@ -23,7 +23,7 @@
 <script>
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3"; 
 
-// Ваши точные данные GitHub
+// Точные данные вашего репозитория
 const GITHUB_USER = "vladislavtech84-cyber";
 const GITHUB_REPO = "radio-player";
 
@@ -69,6 +69,7 @@ function stopEverything() {
 function startTimelineChecking() {
     clearInterval(checkInterval);
     checkInterval = setInterval(() => {
+        // Проверяем репозиторий каждые 5 секунд
         if (!isArchivePlaying) {
             findAndPlayLatestArchive();
         }
@@ -81,35 +82,35 @@ async function findAndPlayLatestArchive() {
         if (!response.ok) return;
         
         const files = await response.json();
+        // Находим все файлы, имя которых начинается с part_
         const mp3Files = files.filter(f => f.name.startsWith('part_') && f.name.endsWith('.mp3'));
         
         if (mp3Files.length > 0) {
-            // Сортируем файлы по имени сверху вниз
+            // Сортируем список файлов по имени (последний окажется сверху)
             mp3Files.sort((a, b) => b.name.localeCompare(a.name));
             
-            // ИСПРАВЛЕНО: Берем точное имя из свойства .name объекта файла
+            // ИСПРАВЛЕНО: Берём имя ПЕРВОГО файла из отсортированного списка
             const latestFileName = mp3Files[0].name; 
 
             isArchivePlaying = true;
-            statusDiv.innerText = `РЕЖИМ: Найдена свежая запись (${latestFileName}). Воспроизведение...`;
-            statusDiv.style.background = "#6f42c1"; 
+            statusDiv.innerText = `РЕЖИМ: Воспроизведение записи (${latestFileName})`;
+            statusDiv.style.background = "#6f42c1"; // Меняем статус на фиолетовый архива
             statusDiv.style.color = "#fff";
             
             player.removeAttribute('src');
             player.load();
-            player.src = `${latestFileName}?v=${new Date().getTime()}`;
-            player.play().catch(e => console.log("Ошибка старта аудио"));
+            // Подставляем прямую ссылку на файл в GitHub Pages
+            player.src = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}/${latestFileName}?v=${new Date().getTime()}`;
+            player.play().catch(e => console.log("Ошибка воспроизведения аудиофайла"));
 
+            // После окончания проигрывания записи — автоматический возврат к радио
             player.onended = () => {
                 player.onended = null;
                 startLiveRadio();
             };
-        } else {
-            statusDiv.innerText = "РЕЖИМ: Живой эфир. Записей в репозитории пока не найдено...";
-            statusDiv.style.background = "#007bff";
         }
     } catch (e) {
-        console.log("Ошибка запроса к API");
+        console.log("Ошибка работы с GitHub API");
     }
 }
 </script>
