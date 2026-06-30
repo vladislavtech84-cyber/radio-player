@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест 18:25 Радио</title>
+    <title>Тест 18:45 Радио</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
@@ -13,7 +13,7 @@
 <body>
 
 <div class="container">
-    <h2>Тест: Радио Петербург (Старт в 18:25)</h2>
+    <h2>Тест: Радио Петербург (Старт в 18:45)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     <button id="playBtn">Включить Радио</button>
@@ -28,9 +28,11 @@ const statusDiv = document.getElementById('status');
 
 let checkInterval;
 let isArchivePlaying = false;
+let forceReturnedToLive = false;
 
 playBtn.addEventListener('click', () => {
     if (player.paused) {
+        forceReturnedToLive = false;
         startLiveRadio();
         playBtn.innerText = "Остановить";
         playBtn.style.background = "#dc3545";
@@ -42,9 +44,9 @@ playBtn.addEventListener('click', () => {
 
 function startLiveRadio() {
     isArchivePlaying = false;
-    player.onended = null; // Полностью сбрасываем слежение
+    player.removeAttribute('src'); // Полностью вычищаем старый источник звука
+    player.load();
     player.src = LIVE_STREAM;
-    player.load(); // Жестко перезагружаем плеер на живой поток
     player.play().catch(e => console.log("Нажмите играть"));
     statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
     statusDiv.style.background = "#28a745";
@@ -68,22 +70,30 @@ function startTimelineChecking() {
         const h = now.getHours();
         const m = now.getMinutes();
 
-        // С 18:25 до 18:34 выводится статус записи в облаке
-        if (h === 18 && m >= 25 && m < 35 && !isArchivePlaying) {
+        // С 18:45 до 18:54 показываем статус фоновой записи
+        if (h === 18 && m >= 45 && m < 55 && !isArchivePlaying) {
             statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub началась запись...]";
             statusDiv.style.background = "#007bff";
         }
 
-        // Начиная с 18:35 ищем файл
-        if (h === 18 && m >= 35 && !isArchivePlaying) {
+        // Начиная с 18:55 ждем готовности файла и включаем его
+        if (h === 18 && m >= 55 && !isArchivePlaying && !forceReturnedToLive) {
             checkAndPlayArchive();
+        }
+
+        // ЖЕСТКИЙ ТАЙМЕР ВОЗВРАТА: Ровно в 19:07 принудительно возвращаем эфир радио
+        if (((h === 19 && m >= 7) || h > 19) && !forceReturnedToLive) {
+            forceReturnedToLive = true;
+            console.log("Время вышло! Жесткий возврат к радио по часам.");
+            startLiveRadio();
         }
     }, 1000);
 }
 
 async function checkAndPlayArchive() {
+    // Добавляем случайное число к ссылке, чтобы обмануть кэш браузера и загрузить НОВЫЙ файл
     const fileUrl = `part_1.mp3?v=${new Date().getTime()}`;
-    statusDiv.innerText = "РЕЖИМ: Ожидание публикации файла от GitHub (Радио пока играет)...";
+    statusDiv.innerText = "РЕЖИМ: Ожидание публикации новой записи от GitHub...";
     statusDiv.style.background = "#ffc107";
     statusDiv.style.color = "#000";
 
@@ -91,22 +101,17 @@ async function checkAndPlayArchive() {
         const response = await fetch(fileUrl, { method: 'HEAD' });
         if (response.ok) {
             isArchivePlaying = true;
-            statusDiv.innerText = "РЕЖИМ: Запись найдена! Воспроизведение архива (10 мин)";
+            statusDiv.innerText = "РЕЖИМ: Запись найдена! Воспроизведение новой записи (10 мин)";
             statusDiv.style.background = "#6f42c1";
             statusDiv.style.color = "#fff";
             
-            player.src = fileUrl;
+            player.removeAttribute('src');
             player.load();
+            player.src = fileUrl;
             player.play();
-
-            // Жесткий принудительный триггер на окончание записи
-            player.onended = () => {
-                console.log("Запись доиграла. Принудительно возвращаем радио.");
-                startLiveRadio();
-            };
         }
     } catch (e) {
-        console.log("Файл еще обновляется...");
+        console.log("Ожидание файла...");
     }
 }
 </script>
