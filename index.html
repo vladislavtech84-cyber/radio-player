@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест 18:45 Радио</title>
+    <title>Тест 18:55 Радио</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 50px; background: #1a1a2e; color: #fff; }
         .container { max-width: 500px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
@@ -13,7 +13,7 @@
 <body>
 
 <div class="container">
-    <h2>Тест: Радио Петербург (Старт в 18:45)</h2>
+    <h2>Тест: Радио Петербург (Старт в 18:55)</h2>
     <audio id="mainPlayer" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     <button id="playBtn">Включить Радио</button>
@@ -44,7 +44,7 @@ playBtn.addEventListener('click', () => {
 
 function startLiveRadio() {
     isArchivePlaying = false;
-    player.removeAttribute('src'); // Полностью вычищаем старый источник звука
+    player.removeAttribute('src'); 
     player.load();
     player.src = LIVE_STREAM;
     player.play().catch(e => console.log("Нажмите играть"));
@@ -70,19 +70,24 @@ function startTimelineChecking() {
         const h = now.getHours();
         const m = now.getMinutes();
 
-        // С 18:45 до 18:54 показываем статус фоновой записи
-        if (h === 18 && m >= 45 && m < 55 && !isArchivePlaying) {
+        // С 18:55 до 19:04 показываем статус записи в облаке
+        if (h === 18 && m >= 55 && !isArchivePlaying) {
+            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub началась запись...]";
+            statusDiv.style.background = "#007bff";
+        }
+        
+        if (h === 19 && m < 5 && !isArchivePlaying) {
             statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub началась запись...]";
             statusDiv.style.background = "#007bff";
         }
 
-        // Начиная с 18:55 ждем готовности файла и включаем его
-        if (h === 18 && m >= 55 && !isArchivePlaying && !forceReturnedToLive) {
+        // Начиная с 19:05 ждем готовности файла и включаем его
+        if (h === 19 && m >= 5 && !isArchivePlaying && !forceReturnedToLive) {
             checkAndPlayArchive();
         }
 
-        // ЖЕСТКИЙ ТАЙМЕР ВОЗВРАТА: Ровно в 19:07 принудительно возвращаем эфир радио
-        if (((h === 19 && m >= 7) || h > 19) && !forceReturnedToLive) {
+        // ЖЕСТКИЙ ТАЙМЕР ВОЗВРАТА: Ровно в 19:17 принудительно возвращаем эфир радио
+        if (((h === 19 && m >= 17) || h > 19) && !forceReturnedToLive) {
             forceReturnedToLive = true;
             console.log("Время вышло! Жесткий возврат к радио по часам.");
             startLiveRadio();
@@ -91,7 +96,7 @@ function startTimelineChecking() {
 }
 
 async function checkAndPlayArchive() {
-    // Добавляем случайное число к ссылке, чтобы обмануть кэш браузера и загрузить НОВЫЙ файл
+    // Обходим кэш с помощью временной метки, чтобы загрузить свежезаписанный файл
     const fileUrl = `part_1.mp3?v=${new Date().getTime()}`;
     statusDiv.innerText = "РЕЖИМ: Ожидание публикации новой записи от GitHub...";
     statusDiv.style.background = "#ffc107";
