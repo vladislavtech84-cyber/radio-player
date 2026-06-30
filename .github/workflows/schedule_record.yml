@@ -1,10 +1,10 @@
-name: Radio Test 10 Mins
+name: Radio Test 13-05
 
 on:
   schedule:
-    # Запуск ровно в 12:40 по МСК (09:40 по UTC)
-    - cron: '40 9 * * *'
-  workflow_dispatch: # Кнопка для ручного запуска
+    # Запуск ровно в 13:05 по МСК (10:05 по UTC)
+    - cron: '5 10 * * *'
+  workflow_dispatch: # Кнопка ручного запуска
 
 jobs:
   test_job:
@@ -19,7 +19,7 @@ jobs:
         python-version: '3.x'
 
     - name: Run Recording
-      # Запускаем запись строго на 600 секунд (10 минут)
+      # Запись идет ровно 600 секунд (10 минут)
       run: python record.py 600
 
     - name: Push File
@@ -27,5 +27,5 @@ jobs:
         git config --global user.name "Radio-Bot"
         git config --global user.email "radio-bot@github.com"
         git add part_1.mp3
-        git commit -m "Тест 10 минут записан [skip ci]" || echo "Нет изменений"
+        git commit -m "Тест 13:05 записан [skip ci]" || echo "Нет изменений"
         git push
