@@ -3,11 +3,10 @@ import time
 import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
-# Принимает 600 секунд из настроек GitHub
 RECORD_DURATION = int(sys.argv) if len(sys.argv) > 1 else 600
 filename = "part_1.mp3"
 
-print(f"Облачный тест запущен. Запись в {filename} на {RECORD_DURATION} секунд...")
+print(f"Запись запущена в облаке. Файл: {filename}, Длительность: {RECORD_DURATION} сек.")
 
 req = urllib.request.Request(
     STREAM_URL, 
@@ -22,7 +21,7 @@ try:
             if not chunk:
                 break
             out_file.write(chunk)
-    print("Запись 10 минут успешно завершена!")
+    print("Файл успешно записан!")
 except Exception as e:
-    print(f"Ошибка записи: {e}")
+    print(f"Ошибка: {e}")
     sys.exit(1)
