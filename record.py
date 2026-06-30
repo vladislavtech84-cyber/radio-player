@@ -4,7 +4,10 @@ import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
 RECORD_DURATION = 600 # 10 минут
-filename = "part_1.mp3"
+
+# Имя файла будет содержать время окончания записи (part_2225.mp3)
+end_time_struct = time.localtime(time.time() + RECORD_DURATION)
+filename = f"part_{time.strftime('%H%M', end_time_struct)}.mp3"
 
 print(f"Запуск записи в облаке. Файл: {filename}, Длительность: {RECORD_DURATION} сек.")
 
@@ -21,7 +24,7 @@ try:
             if not chunk:
                 break
             out_file.write(chunk)
-    print("Файл успешно записан!")
+    print(f"Файл {filename} успешно записан!")
 except Exception as e:
     print(f"Критическая ошибка: {e}")
     sys.exit(1)
