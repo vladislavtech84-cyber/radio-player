@@ -1,9 +1,10 @@
-name: Radio Timer Test 10 Mins
+name: Radio Timer Test 13-10
 
 on:
   schedule:
-    # Автоматический запуск строго в 12:40 по МСК (09:40 по UTC)
-    - cron: '40 9 * * *'
+    # Запуск строго в 13:10 по МСК (10:10 по UTC)
+    - cron: '10 10 * * *'
+  workflow_dispatch: # Позволяет при необходимости запустить вручную
 
 jobs:
   timer_job:
@@ -25,5 +26,5 @@ jobs:
         git config --global user.name "Radio-Bot"
         git config --global user.email "radio-bot@github.com"
         git add part_*.mp3
-        git commit -m "Авто-таймер 10 минут сработал [skip ci]" || echo "Нет изменений"
+        git commit -m "Запись по таймеру 13:10 готова [skip ci]" || echo "Нет изменений"
         git push
