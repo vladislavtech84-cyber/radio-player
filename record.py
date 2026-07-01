@@ -4,11 +4,9 @@ import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
 RECORD_DURATION = 600 # 10 минут
+filename = "test_timer.mp3"
 
-# Имя файла будет содержать точное время начала записи (radio_1545.mp3)
-filename = f"radio_{time.strftime('%H%M')}.mp3"
-
-print(f"Старт записи в файл: {filename} на {RECORD_DURATION} секунд...")
+print(f"Старт записи по таймеру в файл {filename} на {RECORD_DURATION} секунд...")
 
 req = urllib.request.Request(
     STREAM_URL, 
@@ -23,7 +21,7 @@ try:
             if not chunk:
                 break
             out_file.write(chunk)
-    print(f"Файл {filename} успешно сохранен!")
+    print(f"Запись файла {filename} успешно завершена!")
 except Exception as e:
     print(f"Ошибка при записи: {e}")
     sys.exit(1)
