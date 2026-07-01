@@ -2,97 +2,64 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Архив Радио Петербург</title>
+    <title>Тест Таймера Радио</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 40px; background: #1a1a2e; color: #fff; }
         .container { max-width: 550px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
-        button { padding: 10px 20px; font-size: 15px; cursor: pointer; color: white; border: none; border-radius: 6px; font-weight: bold; margin: 5px; }
-        .btn-live { background: #28a745; }
+        button { padding: 12px 20px; font-size: 15px; cursor: pointer; color: white; border: none; border-radius: 6px; font-weight: bold; margin: 5px; transition: 0.2s; }
+        .btn-live { background: #28a745; width: 100%; margin-bottom: 20px; }
+        .btn-live:hover { background: #218838; }
         .btn-play { background: #007bff; }
+        .btn-play:hover { background: #0069d9; }
         .btn-download { background: #ffc107; color: #000; }
-        .archive-list { margin-top: 30px; text-align: left; background: #202035; padding: 15px; border-radius: 8px; }
-        .archive-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #3a3a55; }
-        .archive-item:last-child { border-bottom: none; }
+        .btn-download:hover { background: #e0a800; }
+        .archive-list { margin-top: 20px; text-align: left; background: #202035; padding: 20px; border-radius: 8px; }
+        .archive-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
+        #status { margin-top: 15px; font-size: 14px; color: #a0a0c0; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Радио Петербург — Панель Архива</h2>
+    <h2>Проверка Таймера (Старт в 16:00)</h2>
     <audio id="audioEngine" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
+    
     <button class="btn-live" id="liveBtn">Слушать Прямой Эфир</button>
     
     <div class="archive-list">
-        <h3>📂 Доступные записи для скачивания:</h3>
-        <div id="listContainer">Загрузка списка файлов...</div>
+        <h3>📂 Результат записи по таймеру:</h3>
+        
+        <div class="archive-item">
+            <span>🎵 Запись эфира (10 минут)</span>
+            <div>
+                <button class="btn-play" onclick="playFile('test_timer.mp3')">Слушать</button>
+                <a href="test_timer.mp3" download="radio_test_10min.mp3">
+                    <button class="btn-download">Скачать</button>
+                </a>
+            </div>
+        </div>
     </div>
+    <div id="status">Файл появится здесь автоматически после окончания 10-минутной записи</div>
 </div>
 
 <script>
-const GITHUB_USER = "vladislavtech84-cyber";
-const GITHUB_REPO = "radio-player";
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3";
-
 const audioEngine = document.getElementById('audioEngine');
 const liveBtn = document.getElementById('liveBtn');
-const listContainer = document.getElementById('listContainer');
 
-// Запуск прямого эфира
 liveBtn.addEventListener('click', () => {
     audioEngine.src = LIVE_STREAM;
     audioEngine.play();
 });
 
-// Загрузка списка файлов напрямую через API GitHub
-async function loadArchiveFiles() {
-    try {
-        const response = await fetch(`https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/`);
-        if (!response.ok) {
-            listContainer.innerText = "Ошибка доступа к репозиторию.";
-            return;
-        }
-        const files = await response.json();
-        // Фильтруем только mp3 файлы
-        const mp3Files = files.filter(f => f.name.endsWith('.mp3'));
-
-        if (mp3Files.length === 0) {
-            listContainer.innerText = "В репозитории пока нет файлов .mp3";
-            return;
-        }
-
-        // Сортируем: новые файлы будут сверху списка
-        mp3Files.sort((a, b) => b.name.localeCompare(a.name));
-        listContainer.innerHTML = "";
-
-        mp3Files.forEach(file => {
-            const fileUrl = `https://${GITHUB_USER}.github.io/${GITHUB_REPO}/${file.name}`;
-            
-            const item = document.createElement('div');
-            item.className = 'archive-item';
-            item.innerHTML = `
-                <span>🎵 ${file.name}</span>
-                <div>
-                    <button class="btn-play" onclick="playFile('${fileUrl}')">Слушать</button>
-                    <a href="${fileUrl}" download="${file.name}">
-                        <button class="btn-download">Скачать</button>
-                    </a>
-                </div>
-            `;
-            listContainer.appendChild(item);
-        });
-    } catch (e) {
-        listContainer.innerText = "Ошибка сети при получении списка файлов.";
-    }
+function playFile(fileName) {
+    // Добавляем случайное число, чтобы обойти старый кэш браузера при проверках
+    audioEngine.src = fileName + "?v=" + new Date().getTime();
+    audioEngine.play().catch(e => {
+        alert("Файл по таймеру ещё не записался в облаке. Подождите окончания теста.");
+    });
 }
-
-function playFile(url) {
-    audioEngine.src = url;
-    audioEngine.play();
-}
-
-// Запускаем сканирование при старте страницы
-loadArchiveFiles();
 </script>
 </body>
 </html>
