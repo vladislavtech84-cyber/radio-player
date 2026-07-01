@@ -2,9 +2,9 @@ name: Radio Auto Download Archive
 
 on:
   schedule:
-    # Запуск строго в 15:25 по МСК (12:25 по UTC)
-    - cron: '25 12 * * *'
-  workflow_dispatch: # Кнопка ручного запуска на случай, если cron задержится
+    # Автоматический запуск строго в 15:45 по МСК (12:45 по UTC)
+    - cron: '45 12 * * *'
+  workflow_dispatch: # Кнопка ручного запуска на случай задержки cron
 
 jobs:
   recording_process:
