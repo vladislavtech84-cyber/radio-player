@@ -30,7 +30,6 @@
 </div>
 
 <script>
-// ЖЕСТКО ПРОПИСЫВАЕМ ВАШИ ДАННЫЕ ДЛЯ ИСКЛЮЧЕНИЯ ОШИБОК СЕТИ
 const GITHUB_USER = "vladislavtech84-cyber";
 const GITHUB_REPO = "radio-player";
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3";
@@ -50,7 +49,7 @@ async function loadArchiveFiles() {
     try {
         const response = await fetch(`https://github.com{GITHUB_USER}/${GITHUB_REPO}/contents/`);
         if (!response.ok) {
-            listContainer.innerText = "Записей пока нет. Таймер еще выполняет работу в облаке.";
+            listContainer.innerText = "Ошибка доступа к репозиторию.";
             return;
         }
         const files = await response.json();
@@ -83,7 +82,7 @@ async function loadArchiveFiles() {
             listContainer.appendChild(item);
         });
     } catch (e) {
-        listContainer.innerText = "Ошибка сети. Пожалуйста, обновите страницу.";
+        listContainer.innerText = "Ошибка сети при получении списка файлов.";
     }
 }
 
