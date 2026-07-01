@@ -5,7 +5,7 @@ import sys
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
 RECORD_DURATION = 600 # 10 минут
 
-# Имя файла будет содержать точное время начала записи (например, radio_1525.mp3)
+# Имя файла будет содержать точное время начала записи (radio_1545.mp3)
 filename = f"radio_{time.strftime('%H%M')}.mp3"
 
 print(f"Старт записи в файл: {filename} на {RECORD_DURATION} секунд...")
