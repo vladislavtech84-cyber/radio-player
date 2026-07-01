@@ -1,16 +1,16 @@
-name: Radio Timer Test 13-10
+name: Radio Auto Download Archive
 
 on:
   schedule:
-    # Запуск строго в 13:10 по МСК (10:10 по UTC)
-    - cron: '10 10 * * *'
-  workflow_dispatch: # Позволяет при необходимости запустить вручную
+    # Запуск строго в 15:25 по МСК (12:25 по UTC)
+    - cron: '25 12 * * *'
+  workflow_dispatch: # Кнопка ручного запуска на случай, если cron задержится
 
 jobs:
-  timer_job:
+  recording_process:
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout
+    - name: Checkout Code
       uses: actions/checkout@v4
 
     - name: Setup Python
@@ -21,10 +21,10 @@ jobs:
     - name: Run Recording
       run: python record.py
 
-    - name: Push File
+    - name: Push File to Repo
       run: |
         git config --global user.name "Radio-Bot"
         git config --global user.email "radio-bot@github.com"
-        git add part_*.mp3
-        git commit -m "Запись по таймеру 13:10 готова [skip ci]" || echo "Нет изменений"
+        git add *.mp3
+        git commit -m "Добавлена новая готовая запись [skip ci]" || echo "Нет изменений"
         git push
