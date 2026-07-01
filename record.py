@@ -3,13 +3,12 @@ import time
 import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
-RECORD_DURATION = 300 # 5 минут
+RECORD_DURATION = 600 # 10 минут
 
-# Имя файла будет содержать время окончания записи (part_1315.mp3)
-end_time_struct = time.localtime(time.time() + RECORD_DURATION)
-filename = f"part_{time.strftime('%H%M', end_time_struct)}.mp3"
+# Имя файла будет содержать точное время начала записи (например, radio_1525.mp3)
+filename = f"radio_{time.strftime('%H%M')}.mp3"
 
-print(f"Запуск записи. Файл: {filename}, Длительность: {RECORD_DURATION} сек.")
+print(f"Старт записи в файл: {filename} на {RECORD_DURATION} секунд...")
 
 req = urllib.request.Request(
     STREAM_URL, 
@@ -24,7 +23,7 @@ try:
             if not chunk:
                 break
             out_file.write(chunk)
-    print(f"Файл {filename} успешно записан!")
+    print(f"Файл {filename} успешно сохранен!")
 except Exception as e:
-    print(f"Ошибка таймера: {e}")
+    print(f"Ошибка при записи: {e}")
     sys.exit(1)
