@@ -3,13 +3,13 @@ import time
 import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
-RECORD_DURATION = 600 # 10 минут
+RECORD_DURATION = 300 # 5 минут
 
-# Имя файла будет содержать время окончания записи (part_1250.mp3)
+# Имя файла будет содержать время окончания записи (part_1315.mp3)
 end_time_struct = time.localtime(time.time() + RECORD_DURATION)
 filename = f"part_{time.strftime('%H%M', end_time_struct)}.mp3"
 
-print(f"Запуск записи по ТАЙМЕРУ. Файл: {filename}, Длительность: {RECORD_DURATION} сек.")
+print(f"Запуск записи. Файл: {filename}, Длительность: {RECORD_DURATION} сек.")
 
 req = urllib.request.Request(
     STREAM_URL, 
