@@ -2,35 +2,29 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тест Таймера Радио</title>
+    <title>Железобетонный Таймер</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 40px; background: #1a1a2e; color: #fff; }
         .container { max-width: 550px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
-        button { padding: 12px 20px; font-size: 15px; cursor: pointer; color: white; border: none; border-radius: 6px; font-weight: bold; margin: 5px; transition: 0.2s; }
+        button { padding: 12px 24px; font-size: 15px; cursor: pointer; color: white; border: none; border-radius: 6px; font-weight: bold; margin: 5px; }
         .btn-live { background: #28a745; width: 100%; margin-bottom: 20px; }
-        .btn-live:hover { background: #218838; }
         .btn-play { background: #007bff; }
-        .btn-play:hover { background: #0069d9; }
         .btn-download { background: #ffc107; color: #000; }
-        .btn-download:hover { background: #e0a800; }
-        .archive-list { margin-top: 20px; text-align: left; background: #202035; padding: 20px; border-radius: 8px; }
-        .archive-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
-        #status { margin-top: 15px; font-size: 14px; color: #a0a0c0; font-style: italic; }
+        #status { margin-top: 25px; font-size: 15px; font-weight: bold; padding: 15px; background: #6c757d; border-radius: 6px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Проверка Таймера (Старт в 16:00)</h2>
+    <h2>Проверка Таймера (Старт в 17:00)</h2>
     <audio id="audioEngine" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     
     <button class="btn-live" id="liveBtn">Слушать Прямой Эфир</button>
     
-    <div class="archive-list">
+    <div style="text-align: left; background: #202035; padding: 20px; border-radius: 8px;">
         <h3>📂 Результат записи по таймеру:</h3>
-        
-        <div class="archive-item">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
             <span>🎵 Запись эфира (10 минут)</span>
             <div>
                 <button class="btn-play" onclick="playFile('test_timer.mp3')">Слушать</button>
@@ -40,21 +34,72 @@
             </div>
         </div>
     </div>
-    <div id="status">Файл появится здесь автоматически после окончания 10-минутной записи</div>
+    <div id="status">Статус: Плеер остановлен</div>
 </div>
 
 <script>
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3";
+const GITHUB_USER = "vladislavtech84-cyber";
+const GITHUB_REPO = "radio-player";
+// ВСТАВЬТЕ СЮДА ВАШ ТОКЕН GHP_... МЕЖДУ КАВЫЧКАМИ:
+const GITHUB_TOKEN = "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";
+
 const audioEngine = document.getElementById('audioEngine');
 const liveBtn = document.getElementById('liveBtn');
+const statusDiv = document.getElementById('status');
+
+let checkInterval;
+let wasTriggered = false;
 
 liveBtn.addEventListener('click', () => {
     audioEngine.src = LIVE_STREAM;
     audioEngine.play();
+    statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
+    statusDiv.style.background = "#28a745";
+    startTimelineChecking();
 });
 
+function startTimelineChecking() {
+    clearInterval(checkInterval);
+    checkInterval = setInterval(() => {
+        const now = new Date();
+        const h = now.getHours();
+        const m = now.getMinutes();
+        const s = now.getSeconds();
+
+        // В 17:00:00 плеер принудительно шлет API-сигнал на сервер
+        if (h === 17 && m >= 0 && m < 10) {
+            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub запущена запись 10 минут]";
+            statusDiv.style.background = "#007bff";
+            
+            if (m === 0 && s === 0 && !wasTriggered) {
+                wasTriggered = true;
+                triggerGitHubRecording();
+            }
+        }
+
+        if (((h === 17 && m >= 10) || h > 17)) {
+            statusDiv.innerText = "РЕЖИМ: Запись в облаке завершена. Файл публикуется на сервере.";
+            statusDiv.style.background = "#ffc107";
+            statusDiv.style.color = "#000";
+        }
+    }, 1000);
+}
+
+function triggerGitHubRecording() {
+    console.log("Плеер принудительно будит сервер...");
+    fetch(`https://github.com{GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `token ${GITHUB_TOKEN}`,
+            'Accept': 'application/vnd.github.v3+json',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ event_type: 'trigger_recording' })
+    }).then(res => console.log("Сигнал отправлен!")).catch(e => console.error(e));
+}
+
 function playFile(fileName) {
-    // Добавляем случайное число, чтобы обойти старый кэш браузера при проверках
     audioEngine.src = fileName + "?v=" + new Date().getTime();
     audioEngine.play().catch(e => {
         alert("Файл по таймеру ещё не записался в облаке. Подождите окончания теста.");
