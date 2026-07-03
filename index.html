@@ -23,7 +23,7 @@
     
     <div class="timer-info">
         ⏰ Текущее расписание проверки: <br>
-        15:30 - 15:40 — Запись с Google Диска (Сухое Воздержание) <br>
+        15:45 - 15:55 — Лекция с Google Диска (Прокси-поток) <br>
         В остальное время — Прямой эфир Радио
     </div>
 
@@ -33,8 +33,8 @@
 <script>
 // НАСТРОЙКИ ССЫЛОК
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3";
-// Ваша прямая ссылка на файл «Сухое Лечебное Воздержание»
-const GOOGLE_DRIVE_FILE = "https://google.com";
+// Прокси-ссылка для стабильного стриминга больших файлов Google Drive
+const GOOGLE_DRIVE_FILE = "https://pages.dev";
 
 const audioEngine = document.getElementById('audioEngine');
 const liveBtn = document.getElementById('liveBtn');
@@ -74,8 +74,8 @@ function checkTimeAndPlay() {
     const h = now.getHours();
     const m = now.getMinutes();
 
-    // Условие включения: Час 15, минуты от 30 до 39 (ровно 10 минут)
-    const isDriveTime = (h === 15 && m >= 30 && m < 40);
+    // Условие включения: Час 15, минуты от 45 до 54 включительно (ровно 10 минут)
+    const isDriveTime = (h === 15 && m >= 45 && m < 55);
 
     if (isDriveTime) {
         if (currentMode !== "gdrive") {
