@@ -2,108 +2,107 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Железобетонный Таймер</title>
+    <title>Умный Радиоплеер с Таймером</title>
     <style>
         body { font-family: sans-serif; text-align: center; padding-top: 40px; background: #1a1a2e; color: #fff; }
         .container { max-width: 550px; margin: 0 auto; background: #161625; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.5); border: 1px solid #007bff; }
-        button { padding: 12px 24px; font-size: 15px; cursor: pointer; color: white; border: none; border-radius: 6px; font-weight: bold; margin: 5px; }
-        .btn-live { background: #28a745; width: 100%; margin-bottom: 20px; }
-        .btn-play { background: #007bff; }
-        .btn-download { background: #ffc107; color: #000; }
-        #status { margin-top: 25px; font-size: 15px; font-weight: bold; padding: 15px; background: #6c757d; border-radius: 6px; }
+        button { padding: 12px 24px; font-size: 15px; cursor: pointer; color: white; border: none; border-radius: 6px; font-weight: bold; margin: 5px; width: 100%; }
+        .btn-live { background: #28a745; margin-bottom: 20px; }
+        #status { margin-top: 25px; font-size: 15px; font-weight: bold; padding: 15px; background: #6c757d; border-radius: 6px; transition: all 0.3s ease; }
+        .timer-info { margin-top: 15px; padding: 10px; background: #202035; border-radius: 6px; font-size: 14px; color: #ffc107; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Проверка Таймера (Старт в 17:00)</h2>
+    <h2>Радио с переключением на Google Диск</h2>
     <audio id="audioEngine" controls style="width: 100%; margin-top: 15px;"></audio>
     <br><br>
     
-    <button class="btn-live" id="liveBtn">Слушать Прямой Эфир</button>
+    <button class="btn-live" id="liveBtn">Включить плеер</button>
     
-    <div style="text-align: left; background: #202035; padding: 20px; border-radius: 8px;">
-        <h3>📂 Результат записи по таймеру:</h3>
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <span>🎵 Запись эфира (10 минут)</span>
-            <div>
-                <button class="btn-play" onclick="playFile('test_timer.mp3')">Слушать</button>
-                <a href="test_timer.mp3" download="radio_test_10min.mp3">
-                    <button class="btn-download">Скачать</button>
-                </a>
-            </div>
-        </div>
+    <div class="timer-info">
+        ⏰ Текущее расписание проверки: <br>
+        15:30 - 15:40 — Запись с Google Диска (Сухое Воздержание) <br>
+        В остальное время — Прямой эфир Радио
     </div>
+
     <div id="status">Статус: Плеер остановлен</div>
 </div>
 
 <script>
+// НАСТРОЙКИ ССЫЛОК
 const LIVE_STREAM = "https://radio.5-tv.ru/radio.mp3";
-const GITHUB_USER = "vladislavtech84-cyber";
-const GITHUB_REPO = "radio-player";
-// ВСТАВЬТЕ СЮДА ВАШ ТОКЕН GHP_... МЕЖДУ КАВЫЧКАМИ:
-const GITHUB_TOKEN = "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";
+// Ваша прямая ссылка на файл «Сухое Лечебное Воздержание»
+const GOOGLE_DRIVE_FILE = "https://google.com";
 
 const audioEngine = document.getElementById('audioEngine');
 const liveBtn = document.getElementById('liveBtn');
 const statusDiv = document.getElementById('status');
 
 let checkInterval;
-let wasTriggered = false;
+let currentMode = "stopped"; 
 
 liveBtn.addEventListener('click', () => {
-    audioEngine.src = LIVE_STREAM;
-    audioEngine.play();
-    statusDiv.innerText = "РЕЖИМ: Живой прямой эфир";
-    statusDiv.style.background = "#28a745";
-    startTimelineChecking();
+    if (currentMode === "stopped") {
+        currentMode = "initializing";
+        liveBtn.innerText = "Остановить плеер";
+        liveBtn.style.background = "#dc3545";
+        checkTimeAndPlay(); 
+        startTimelineChecking();
+    } else {
+        clearInterval(checkInterval);
+        audioEngine.pause();
+        audioEngine.src = "";
+        currentMode = "stopped";
+        liveBtn.innerText = "Включить плеер";
+        liveBtn.style.background = "#28a745";
+        statusDiv.innerText = "Статус: Плеер остановлен";
+        statusDiv.style.background = "#6c757d";
+    }
 });
 
 function startTimelineChecking() {
     clearInterval(checkInterval);
     checkInterval = setInterval(() => {
-        const now = new Date();
-        const h = now.getHours();
-        const m = now.getMinutes();
-        const s = now.getSeconds();
-
-        // В 17:00:00 плеер принудительно шлет API-сигнал на сервер
-        if (h === 17 && m >= 0 && m < 10) {
-            statusDiv.innerText = "РЕЖИМ: Прямой эфир + [В облаке GitHub запущена запись 10 минут]";
-            statusDiv.style.background = "#007bff";
-            
-            if (m === 0 && s === 0 && !wasTriggered) {
-                wasTriggered = true;
-                triggerGitHubRecording();
-            }
-        }
-
-        if (((h === 17 && m >= 10) || h > 17)) {
-            statusDiv.innerText = "РЕЖИМ: Запись в облаке завершена. Файл публикуется на сервере.";
-            statusDiv.style.background = "#ffc107";
-            statusDiv.style.color = "#000";
-        }
-    }, 1000);
+        checkTimeAndPlay();
+    }, 1000); 
 }
 
-function triggerGitHubRecording() {
-    console.log("Плеер принудительно будит сервер...");
-    fetch(`https://github.com{GITHUB_USER}/${GITHUB_REPO}/dispatches`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `token ${GITHUB_TOKEN}`,
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ event_type: 'trigger_recording' })
-    }).then(res => console.log("Сигнал отправлен!")).catch(e => console.error(e));
+function checkTimeAndPlay() {
+    const now = new Date();
+    const h = now.getHours();
+    const m = now.getMinutes();
+
+    // Условие включения: Час 15, минуты от 30 до 39 (ровно 10 минут)
+    const isDriveTime = (h === 15 && m >= 30 && m < 40);
+
+    if (isDriveTime) {
+        if (currentMode !== "gdrive") {
+            currentMode = "gdrive";
+            switchSource(GOOGLE_DRIVE_FILE, "⚠️ РЕЖИМ: Трансляция файла с Google Диска (10 минут)", "#ffc107", "#000");
+        }
+    } else {
+        if (currentMode !== "radio" && currentMode !== "stopped") {
+            currentMode = "radio";
+            switchSource(LIVE_STREAM, "📻 РЕЖИМ: Живой прямой эфир радио", "#28a745", "#fff");
+        }
+    }
 }
 
-function playFile(fileName) {
-    audioEngine.src = fileName + "?v=" + new Date().getTime();
-    audioEngine.play().catch(e => {
-        alert("Файл по таймеру ещё не записался в облаке. Подождите окончания теста.");
-    });
+function switchSource(url, statusText, bgColor, textColor = "#fff") {
+    const wasPlaying = !audioEngine.paused || currentMode === "initializing";
+    
+    audioEngine.src = url;
+    audioEngine.load();
+    
+    if (wasPlaying) {
+        audioEngine.play().catch(e => console.log("Ошибка автозапуска: ", e));
+    }
+    
+    statusDiv.innerText = statusText;
+    statusDiv.style.background = bgColor;
+    statusDiv.style.color = textColor;
 }
 </script>
 </body>
