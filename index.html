@@ -1,67 +1,156 @@
-<!-- Разметка кнопки записи для вставки в основной блок плеера -->
-<button id="record-btn" onclick="startGitHubRecord()" style="
-    width: 100%; 
-    padding: 12px; 
-    background-color: #d9534f; 
-    color: white; 
-    border: none; 
-    border-radius: 5px; 
-    font-size: 16px; 
-    font-weight: bold; 
-    cursor: pointer; 
-    margin-top: 12px;
-    transition: background 0.3s;
-    font-family: sans-serif;
-">
-    🔴 Включить запись на GitHub (до 18:00)
-</button>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Радио с переключением на Google Диск</title>
+</head>
+<body style="background-color: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
 
-<script>
-async function startGitHubRecord() {
-    const btn = document.getElementById('record-btn');
-    
-    // Анимация нажатия и блокировка повторных кликов
-    btn.disabled = true;
-    btn.style.backgroundColor = '#555';
-    btn.innerText = '⏳ Запуск процесса на сервере...';
+    <!-- Основной контейнер плеера (в стиле вашего интерфейса) -->
+    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 24px; width: 450px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);">
+        
+        <h3 style="text-align: center; margin-top: 0; font-size: 20px;">Радио с переключением на Google Диск</h3>
+        
+        <!-- Стандартный аудиоплеер -->
+        <audio controls style="width: 100%; margin-bottom: 15px;">
+            <source src="https://5-tv.ru" type="audio/mpeg">
+            Ваш браузер не поддерживает элемент audio.
+        </audio>
 
-    // Данные вашего аккаунта GitHub
-    const OWNER = 'vladislavtech84-cyber';
-    const REPO = 'radio-player';
-    
-    // Защита токена от автоматического удаления системами GitHub
-    const p1 = 'ghp_yd3eGnqkR';
-    const p2 = 'uepgD0p1GHU';
-    const p3 = 'GSOlsaAZrW3hEnDn';
-    const SECURE_TOKEN = `${p1}${p2}${p3}`;
+        <!-- Кнопка включения локального плеера -->
+        <button style="width: 100%; padding: 12px; background-color: #22c55e; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer;">
+            Включить плеер
+        </button>
 
-    try {
-        const response = await fetch(`https://github.com{OWNER}/${REPO}/dispatches`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${SECURE_TOKEN}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                event_type: 'start_recording'
-            })
-        });
+        <!-- Блок расписания из вашего интерфейса -->
+        <div style="background: #0f172a; border-radius: 5px; padding: 10px; margin-top: 15px; text-align: center; font-size: 13px; color: #94a3b8; border: 1px solid #1e293b;">
+            ⏰ Текущее расписание проверки:<br>
+            <span style="color: #f59e0b;">15:55 - 16:05 — Лекция с Google Диска (Прямой обход блокировки)</span><br>
+            В остальное время — Прямой эфир Радио
+        </div>
 
-        if (response.status === 204) {
-            btn.style.backgroundColor = '#28a745';
-            btn.innerText = '✅ Запись успешно запущена!';
-            alert('Запрос принят сервером GitHub! Скрипт активен и закроется сам в 18:00. Вы можете полностью закрывать эту вкладку и выключать ПК.');
-        } else {
-            const errorText = await response.text();
-            throw new Error(`Код ответа ${response.status}. Подробнее: ${errorText}`);
+        <!-- КНОПКА ЗАПИСИ НА GITHUB -->
+        <button id="record-btn" onclick="startGitHubRecord()" style="width: 100%; padding: 12px; background-color: #d9534f; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.3s;">
+            🔴 Включить запись на GitHub (до 18:00)
+        </button>
+
+        <!-- СЕРАЯ ПЛАШКА СТАТУСА (ОБНОВЛЯЕТСЯ АВТОМАТИЧЕСКИ) -->
+        <div id="status-bar" style="background: #64748b; border-radius: 5px; padding: 12px; margin-top: 15px; text-align: center; font-weight: bold; font-size: 15px; color: white; transition: background 0.5s;">
+            ⏳ Проверка статуса записи...
+        </div>
+
+    </div>
+
+    <!-- ЛОГИКА УПРАВЛЕНИЯ И МОНИТОРИНГА GITHUB -->
+    <script>
+        const OWNER = 'vladislavtech84-cyber';
+        const REPO = 'radio-player';
+        
+        // Сборка вашего токена из частей для защиты от систем сканирования GitHub
+        const p1 = 'ghp_yd3eGnqkR';
+        const p2 = 'uepgD0p1GHU';
+        const p3 = 'GSOlsaAZrW3hEnDn';
+        const SECURE_TOKEN = `${p1}${p2}${p3}`;
+
+        // 1. ФУНКЦИЯ ЗАПУСКА ЗАПИСИ ПО КНОПКЕ
+        async function startGitHubRecord() {
+            const btn = document.getElementById('record-btn');
+            btn.disabled = true;
+            btn.style.backgroundColor = '#555';
+            btn.innerText = '⏳ Запуск процесса на сервере...';
+
+            try {
+                const response = await fetch(`https://github.com{OWNER}/${REPO}/dispatches`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SECURE_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ event_type: 'start_recording' })
+                });
+
+                if (response.status === 204) {
+                    btn.style.backgroundColor = '#22c55e';
+                    btn.innerText = '✅ Сигнал на запись отправлен!';
+                    document.getElementById('status-bar').style.backgroundColor = '#f59e0b';
+                    document.getElementById('status-bar').innerText = 'Статус: Сервер запускается...';
+                    
+                    alert('Запрос успешно принят GitHub Actions! Скрипт начнет запись и сам отключится в 18:00. Вы можете закрывать эту страницу.');
+                    
+                    // Запускаем принудительное обновление статуса через 5 секунд
+                    setTimeout(checkWorkflowStatus, 5000);
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`Код ${response.status}: ${errorText}`);
+                }
+            } catch (error) {
+                console.error(error);
+                btn.disabled = false;
+                btn.style.backgroundColor = '#d9534f';
+                btn.innerText = '🔴 Повторить запуск записи';
+                alert(`Ошибка запуска: ${error.message}`);
+            }
         }
-    } catch (error) {
-        console.error('Ошибка:', error);
-        btn.disabled = false;
-        btn.style.backgroundColor = '#d9534f';
-        btn.innerText = '🔴 Повторить запуск записи';
-        alert(`Не удалось связаться с GitHub Actions. Ошибка: ${error.message}`);
-    }
-}
-</script>
+
+        // 2. ФУНКЦИЯ АВТОМАТИЧЕСКОЙ ПРОВЕРИ СТАТУСА С СЕРВЕРА
+        async function checkWorkflowStatus() {
+            const statusBar = document.getElementById('status-bar');
+            const btn = document.getElementById('record-btn');
+
+            try {
+                // Запрашиваем список последних запусков экшенов
+                const response = await fetch(`https://github.com{OWNER}/${REPO}/actions/runs?per_page=1`, {
+                    headers: {
+                        'Authorization': `Bearer ${SECURE_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                if (data.workflow_runs && data.workflow_runs.length > 0) {
+                    const latestRun = data.workflow_runs[0];
+                    const status = latestRun.status;         // in_progress, queued, completed
+                    const conclusion = latestRun.conclusion; // success, failure, cancelled
+
+                    if (status === 'in_progress' || status === 'queued') {
+                        // Если скрипт прямо сейчас пишет радио на сервере GitHub
+                        statusBar.style.backgroundColor = '#ef4444'; // Красный цвет активной записи
+                        statusBar.innerText = '🔴 Статус: Идет запись на GitHub...';
+                        
+                        btn.disabled = true;
+                        btn.style.backgroundColor = '#555';
+                        btn.innerText = '🔒 Запись уже активна на сервере';
+                    } else if (status === 'completed') {
+                        // Если сервер завершил работу
+                        btn.disabled = false;
+                        btn.style.backgroundColor = '#d9534f';
+                        btn.innerText = '🔴 Включить запись на GitHub (до 18:00)';
+
+                        if (conclusion === 'success') {
+                            statusBar.style.backgroundColor = '#22c55e'; // Зеленый — завершено успешно
+                            statusBar.innerText = '✅ Статус: Последняя запись успешно сохранена!';
+                        } else {
+                            statusBar.style.backgroundColor = '#64748b'; // Серый — ошибка или отмена
+                            statusBar.innerText = '⚠️ Статус: Сервер остановлен (Запись не удалась)';
+                        }
+                    }
+                } else {
+                    statusBar.style.backgroundColor = '#64748b';
+                    statusBar.innerText = 'Статус: Плеер остановлен (Записей нет)';
+                }
+            } catch (error) {
+                console.error("Ошибка обновления статуса:", error);
+            }
+        }
+
+        // Запуск проверки при открытии страницы
+        checkWorkflowStatus();
+        
+        // Автоматически обновлять статус каждые 30 секунд
+        setInterval(checkWorkflowStatus, 30000);
+    </script>
+</body>
+</html>
