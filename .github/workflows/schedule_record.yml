@@ -1,6 +1,9 @@
-учного теста прямо из панели GitHub
+name: Radio Recorder Automated
+
+on:
+  workflow_dispatch:
   repository_dispatch:
-    types: [start_recording] # Сигнал, который отправляет кнопка из index.html
+    types: [start_recording]
 
 jobs:
   build_and_record:
@@ -27,5 +30,4 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action Radio Bot"
         git add *.mp3
-        # Проверяем, есть ли новые файлы для коммита, чтобы избежать ошибок
         git diff --quiet && git diff --staged --quiet || (git commit -m "Добавлена новая запись эфира радио" && git push)
