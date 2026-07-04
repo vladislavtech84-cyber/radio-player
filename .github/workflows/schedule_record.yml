@@ -1,7 +1,7 @@
-name: Расписание Записи Радио
+name: Запись Радио с автостопом в 18:00
 
 on:
-  workflow_dispatch: # Только ручной запуск по кнопке
+  workflow_dispatch: # Запуск вручную в любое время
 
 jobs:
   record_audio:
@@ -16,16 +16,45 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg
 
-    - name: Запись потока (1 час)
+    - name: Расчет времени до 18:00 МСК
+      id: calc_time
       run: |
-        # Запись идет ровно 1 час (3600 секунд)
-        # Поток разбивается на 2 файла по 30 минут, чтобы пройти лимиты GitHub
-        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 3600 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+        # 18:00 по Москве — это 15:00 по времени UTC (сервер работает по UTC)
+        TARGET_HOUR=15
+        TARGET_MIN=0
+        
+        # Текущее время сервера в секундах
+        NOW=$(date +%s)
+        
+        # Время 18:00 МСК (15:00 UTC) на сегодня
+        TARGET_TODAY=$(date -d "today $TARGET_HOUR:$TARGET_MIN:00" +%s)
+        
+        # Если 18:00 на сегодня уже прошло, считаем до 18:00 завтрашнего дня
+        if [ "$NOW" -gt "$TARGET_TODAY" ]; then
+          TARGET=$(date -d "tomorrow $TARGET_HOUR:$TARGET_MIN:00" +%s)
+        else
+          TARGET=$TARGET_TODAY
+        fi
+        
+        # Вычисляем разницу в секундах
+        DURATION=$((TARGET - NOW))
+        
+        echo "Осталось секунд до 18:00 МСК: $DURATION"
+        echo "duration=$DURATION" >> $GITHUB_OUTPUT
+
+    - name: Запись потока с автостопом
+      run: |
+        # Берем рассчитанное время из предыдущего шага
+        TOTAL_TIME=${{ steps.calc_time.outputs.duration }}
+        
+        # Запускаем запись частями по 30 минут (1800 сек)
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t "$TOTAL_TIME" -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Сохранение аудиофайлов в репозиторий
+      if: always() # Сохранить файлы, даже если запись прервется принудительно
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@://github.com"
         git add radio_*.mp3
-        git commit -m "Добавлен 1 час архивной записи радио вручную"
+        git commit -m "Архив радио. Запись остановлена в 18:00 МСК"
         git push
