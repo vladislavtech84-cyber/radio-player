@@ -8,7 +8,6 @@ import sys
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
 is_running = True
 
-# Перехватываем команду отмены от кнопки "Стоп", чтобы корректно сохранить файл
 def handle_stop_signal(signum, frame):
     global is_running
     print("\n[!] Получена команда экстренной остановки. Закрываем поток и сохраняем аудио...")
@@ -35,7 +34,6 @@ def record_stream(duration, filename):
         
         with open(filename, 'wb') as f:
             for chunk in response.iter_content(chunk_size=4096):
-                # Останавливаемся либо по таймеру 18:00, либо по кнопке Стоп
                 if not is_running or (time.time() - start_time > duration):
                     break
                 if chunk:
