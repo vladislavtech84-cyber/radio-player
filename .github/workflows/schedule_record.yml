@@ -30,4 +30,4 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action Radio Bot"
         git add *.mp3
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Добавлена новая запись эфира радио" && git push)
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Добавлена новая запись эфира radio" && git push)
