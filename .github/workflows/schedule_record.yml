@@ -1,5 +1,4 @@
-
-name: Запись Радио Эфира
+name: Тестовая Запись Радио
 
 on:
   workflow_dispatch: # Позволяет запускать запись вручную кнопкой
@@ -17,15 +16,15 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg
 
-    - name: Запись потока (Часть 1 — 5 часов)
+    - name: Тестовая запись (1 минута)
       run: |
-        # Запись идет 5 часов (18000 секунд) частями по 30 минут (1800 секунд)
-        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 18000 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+        # Запись идет ровно 60 секунд для проверки звука
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 60 -c copy -f segment -segment_time 60 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
-    - name: Сохранение файлов в репозиторий
+    - name: Сохранение тестового файла в репозиторий
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@://github.com"
         git add radio_*.mp3
-        git commit -m "Добавлены архивные записи радио (5 часов)"
+        git commit -m "Добавлен тестовый фрагмент радио"
         git push
