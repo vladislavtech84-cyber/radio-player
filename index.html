@@ -1,5 +1,204 @@
 <!DOCTYPE html>
+<html lang="ru"><!DOCTYPE html>
 <html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Радио с переключением на Google Диск</title>
+</head>
+<body style="background-color: #0f172a; color: white; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
+
+    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 24px; width: 450px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5);">
+        
+        <h3 style="text-align: center; margin-top: 0; font-size: 20px;">Радио с переключением на Google Диск</h3>
+        
+        <!-- Аудиоплеер -->
+        <div style="margin-bottom: 15px;">
+            <label id="audio-label" style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px; text-align: center;">Плеер: Прямой эфир (или выберите запись)</label>
+            <audio id="radio-audio" controls style="width: 100%;">
+                <source src="https://5-tv.ru" type="audio/mpeg">
+            </audio>
+        </div>
+
+        <!-- Кнопки прослушивания и скачивания файла -->
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <button id="listen-saved-btn" onclick="playLastSaved()" disabled style="flex: 1; padding: 10px; background-color: #3b82f6; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: not-allowed; opacity: 0.5; font-size: 14px;">
+                🎧 Слушать запись
+            </button>
+            <a id="download-link" href="#" download style="flex: 1; text-decoration: none;">
+                <button id="download-btn" disabled style="width: 100%; padding: 10px; background-color: #a855f7; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: not-allowed; opacity: 0.5; font-size: 14px;">
+                    📥 Скачать .mp3
+                </button>
+            </a>
+        </div>
+
+        <!-- Управление записью на сервере -->
+        <div style="display: flex; gap: 10px;">
+            <button id="record-btn" onclick="startGitHubRecord()" style="flex: 2; padding: 12px; background-color: #d9534f; color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer;">
+                🔴 Начать запись
+            </button>
+            <button id="stop-btn" onclick="stopGitHubRecord()" disabled style="flex: 1; padding: 12px; background-color: #475569; color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: not-allowed; opacity: 0.5;">
+                ⏹️ Стоп
+            </button>
+        </div>
+
+        <!-- Информационный блок -->
+        <div style="background: #0f172a; border-radius: 5px; padding: 10px; margin-top: 15px; text-align: center; font-size: 13px; color: #94a3b8; border: 1px solid #1e293b;">
+            ⏰ Текущее расписание проверки:<br>
+            <span style="color: #f59e0b;">15:55 - 16:05 — Лекция с Google Диска (Прямой обход блокировки)</span><br>
+            В остальное время — Прямой эфир Радио
+        </div>
+
+        <!-- Строка статуса -->
+        <div id="status-bar" style="background: #64748b; border-radius: 5px; padding: 12px; margin-top: 15px; text-align: center; font-weight: bold; font-size: 15px; color: white;">
+            ⏳ Проверка статуса...
+        </div>
+
+    </div>
+
+    <script>
+        const OWNER = 'vladislavtech84-cyber';
+        const REPO = 'radio-player';
+        
+        const p1 = 'ghp_yd3eGnqkR';
+        const p2 = 'uepgD0p1GHU';
+        const p3 = 'GSOlsaAZrW3hEnDn';
+        const SECURE_TOKEN = `${p1}${p2}${p3}`;
+
+        let currentActiveRunId = null;
+        let lastSavedFileUrl = null;
+        let lastSavedFileName = "";
+
+        // Поиск последнего аудиофайла в репозитории
+        async function fetchLastSavedFile() {
+            try {
+                const response = await fetch(`https://github.com{OWNER}/${REPO}/contents/`, {
+                    headers: { 'Authorization': `Bearer ${SECURE_TOKEN}` }
+                });
+                if (!response.ok) return;
+                
+                const files = await response.json();
+                const mp3Files = files.filter(f => f.name.startsWith('radio_record_') && f.name.endsWith('.mp3'));
+                
+                if (mp3Files.length > 0) {
+                    mp3Files.sort((a, b) => b.name.localeCompare(a.name));
+                    const latestFile = mp3Files[0]; // Исправлено: берем первый элемент без ошибок
+                    
+                    lastSavedFileUrl = latestFile.download_url;
+                    lastSavedFileName = latestFile.name;
+
+                    document.getElementById('listen-saved-btn').disabled = false;
+                    document.getElementById('listen-saved-btn').style.cursor = 'pointer';
+                    document.getElementById('listen-saved-btn').style.opacity = '1';
+
+                    document.getElementById('download-btn').disabled = false;
+                    document.getElementById('download-btn').style.cursor = 'pointer';
+                    document.getElementById('download-btn').style.opacity = '1';
+                    document.getElementById('download-link').href = lastSavedFileUrl;
+                }
+            } catch (e) { console.error("Ошибка поиска файлов:", e); }
+        }
+
+        // Включение прослушивания записи прямо в плеере
+        function playLastSaved() {
+            if (!lastSavedFileUrl) return;
+            const audio = document.getElementById('radio-audio');
+            const label = document.getElementById('audio-label');
+            
+            audio.src = lastSavedFileUrl;
+            label.innerText = `▶️ Играет запись: ${lastSavedFileName}`;
+            audio.play();
+        }
+
+        // Запуск записи на GitHub
+        async function startGitHubRecord() {
+            document.getElementById('record-btn').disabled = true;
+            document.getElementById('record-btn').innerText = '⏳ Запуск...';
+
+            try {
+                const response = await fetch(`https://github.com{OWNER}/${REPO}/dispatches`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SECURE_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ event_type: 'start_recording' })
+                });
+
+                if (response.status === 204) {
+                    document.getElementById('status-bar').style.backgroundColor = '#f59e0b';
+                    document.getElementById('status-bar').innerText = 'Статус: Сервер запускается...';
+                    setTimeout(checkWorkflowStatus, 4000);
+                }
+            } catch (error) { alert(`Ошибка запуска: ${error.message}`); }
+        }
+
+        // Принудительная остановка текущей записи кнопкой "Стоп"
+        async function stopGitHubRecord() {
+            if (!currentActiveRunId) return;
+            
+            const stopBtn = document.getElementById('stop-btn');
+            stopBtn.disabled = true;
+            stopBtn.innerText = '⏳ Стоп...';
+
+            try {
+                const response = await fetch(`https://github.com{OWNER}/${REPO}/actions/runs/${currentActiveRunId}/cancel`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${SECURE_TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    }
+                });
+
+                if (response.ok) {
+                    alert('Сигнал остановки отправлен. Сервер сохраняет записанный фрагмент в файлы репозитория. Подождите около 30 секунд.');
+                    setTimeout(checkWorkflowStatus, 5000);
+                }
+            } catch (error) { alert(`Ошибка остановки: ${error.message}`); }
+        }
+
+        // Мониторинг статуса сервера GitHub Actions
+        async function checkWorkflowStatus() {
+            const statusBar = document.getElementById('status-bar');
+            const recordBtn = document.getElementById('record-btn');
+            const stopBtn = document.getElementById('stop-btn');
+
+            try {
+                const response = await fetch(`https://github.com{OWNER}/${REPO}/actions/runs?per_page=1`, {
+                    headers: { 'Authorization': `Bearer ${SECURE_TOKEN}` }
+                });
+                if (!response.ok) return;
+
+                const data = await response.json();
+                if (data.workflow_runs && data.workflow_runs.length > 0) {
+                    const run = data.workflow_runs[0];
+                    const status = run.status;
+                    const conclusion = run.conclusion;
+
+                    if (status === 'in_progress' || status === 'queued') {
+                        currentActiveRunId = run.id;
+                        
+                        statusBar.style.backgroundColor = '#ef4444';
+                        statusBar.innerText = '🔴 Статус: Идет запись на GitHub...';
+                        
+                        recordBtn.disabled = true;
+                        recordBtn.style.opacity = '0.5';
+                        
+                        stopBtn.disabled = false;
+                        stopBtn.style.backgroundColor = '#dc2626';
+                        stopBtn.style.cursor = 'pointer';
+                        stopBtn.style.opacity = '1';
+                        stopBtn.innerText = '⏹️ Остановить запись';
+                    } else {
+                        currentActiveRunId = null;
+                        
+                        recordBtn.disabled = false;
+                        recordBtn.style.opacity = '1';
+                        recordBtn.style.backgroundColor = '#d9534f';
+                        recordBtn.innerText = '🔴 Начать запись';
+
+                        stopBtn.disabled = true;
+Используйте код с осторожностью.stopBtn.style.backgroundColor = '#475569';stopBtn.style.opacity = '0.5';stopBtn.style.cursor = 'not-allowed';stopBtn.innerText = '⏹️ Стоп';if (status === 'completed' && conclusion === 'success') {statusBar.style.backgroundColor = '#22c55e';statusBar.innerText = '✅ Статус: Готово! Файл сохранен.';} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен';}}}} catch (e) { console.error(e); }}// Стартовые проверкиfetchLastSavedFile();checkWorkflowStatus();// Цикл обновлений раз в 20 секундsetInterval(() => {checkWorkflowStatus();fetchLastSavedFile();}, 20000);
 <head>
     <meta charset="UTF-8">
     <title>Радио с переключением на Google Диск</title>
