@@ -12,7 +12,7 @@
         
         <!-- Плеер -->
         <div style="margin-bottom: 15px;">
-            <label id="audio-label" style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px; text-align: center;">Плеер: Прямой эфир (или выберите запись)</label>
+            <label id="audio-label" style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px; text-align: center;">Плеер: Пнямой эфир (или выберите запись)</label>
             <audio id="radio-audio" controls style="width: 100%;">
                 <source src="https://radio.5-tv.ru/radio.mp3" type="audio/mpeg">
             </audio>
@@ -43,7 +43,7 @@
         <!-- Инфо-блок -->
         <div style="background: #0f172a; border-radius: 5px; padding: 10px; margin-top: 15px; text-align: center; font-size: 13px; color: #94a3b8; border: 1px solid #1e293b;">
             ⏰ Текущее расписание проверки:<br>
-            <span style="color: #f59e0b;">15:55 - 16:05 — Лекция с Google Диска (Пнямой обход блокировки)</span><br>
+            <span style="color: #f59e0b;">15:55 - 16:05 — Лекция с Google Диска (Прямой обход блокировки)</span><br>
             В остальное время — Прямой эфир Радио
         </div>
 
@@ -57,7 +57,6 @@
             <h4 style="margin: 0 0 10px 0; font-size: 16px; text-align: center; color: #94a3b8;">📁 Архив прошлых записей</h4>
             <div id="archive-list" style="max-height: 150px; overflow-y: auto; background: #0f172a; border-radius: 5px; padding: 5px; border: 1px solid #334155;">
                 <!--ARCHIVE_START-->
-                <!-- Сюда робот GitHub будет сам добавлять новые строчки -->
             </div>
         </div>
 
@@ -90,7 +89,9 @@
                 
                 if (mp3Files.length > 0) {
                     mp3Files.sort((a, b) => b.name.localeCompare(a.name));
-                    const latestFile = mp3Files.at(0); 
+                    
+                    // ИСПРАВЛЕНО: Заменено .at(0) на классический индекс [0]
+                    const latestFile = mp3Files[0]; 
                     
                     lastSavedFileUrl = latestFile.download_url;
                     lastSavedFileName = latestFile.name;
@@ -116,7 +117,6 @@
             audio.play();
         }
 
-        // Функция для воспроизведения конкретного файла из списка архива
         function playSpecificRecord(filename) {
             const audio = document.getElementById('radio-audio');
             const label = document.getElementById('audio-label');
@@ -187,12 +187,12 @@
 
                 const data = await response.json();
                 if (data.workflow_runs && data.workflow_runs.length > 0) {
-                    const run = data.workflow_runs.at(0); 
+                    // ИСПРАВЛЕНО: Заменено .at(0) на классический индекс [0]
+                    const run = data.workflow_runs[0]; 
                     const status = run.status;
                     const conclusion = run.conclusion;
 
                     if (status === 'in_progress' || status === 'queued') {
                         currentActiveRunId = run.id;
                         statusBar.style.backgroundColor = '#ef4444';
-Используйте код с осторожностью.statusBar.innerText = '🔴 Статус: Идет запись на GitHub...';recordBtn.disabled = true;recordBtn.style.opacity = '0.5';stopBtn.disabled = false;stopBtn.style.backgroundColor = '#dc2626';stopBtn.style.cursor = 'pointer';stopBtn.style.opacity = '1';stopBtn.innerText = '⏹️ Остановить';} else {currentActiveRunId = null;recordBtn.disabled = false;recordBtn.style.opacity = '1';recordBtn.style.backgroundColor = '#d9534f';recordBtn.innerText = '🔴 Начать запись';stopBtn.disabled = true;stopBtn.style.backgroundColor = '#475569';stopBtn.style.opacity = '0.5';stopBtn.innerText = '⏹️ Стоп';if (status === 'completed' && conclusion === 'success') {statusBar.style.backgroundColor = '#22c55e';statusBar.innerText = '✅ Статус: Плеер остановлен (Запись сохранена)';} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен';}}}} catch (e) { console.error(e); }}fetchLastSavedFile();checkWorkflowStatus();setInterval(() => {checkWorkflowStatus();fetchLastSavedFile();}, 20000);
----
+Используйте код с осторожностью.statusBar.innerText = '🔴 Статус: Идет запись на GitHub...';recordBtn.disabled = true;recordBtn.style.opacity = '0.5';stopBtn.disabled = false;stopBtn.style.backgroundColor = '#dc2626';stopBtn.style.cursor = 'pointer';stopBtn.style.opacity = '1';stopBtn.innerText = '⏹️ Стоп';} else {currentActiveRunId = null;recordBtn.disabled = false;recordBtn.style.opacity = '1';recordBtn.style.backgroundColor = '#d9534f';recordBtn.innerText = '🔴 Начать запись';stopBtn.disabled = true;stopBtn.style.backgroundColor = '#475569';stopBtn.style.opacity = '0.5';stopBtn.innerText = '⏹️ Стоп';if (status === 'completed' && conclusion === 'success') {statusBar.style.backgroundColor = '#22c55e';statusBar.innerText = '✅ Статус: Плеер остановлен (Запись сохранена)';} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен';}}}} catch (e) { console.error(e); }}fetchLastSavedFile();checkWorkflowStatus();setInterval(() => {checkWorkflowStatus();fetchLastSavedFile();}, 20000);
