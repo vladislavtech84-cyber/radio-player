@@ -1,24 +1,33 @@
 import datetime
 import time
 import requests
+import signal
+import sys
 
-# Прямая ссылка на ваше радио
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
+is_running = True
+file_name = ""
+
+# Обработчик сигнала принудительной остановки от GitHub
+def handle_stop_signal(signum, frame):
+    global is_running
+    print("\n[!] Получен сигнал остановки. Завершаем запись и сохраняем файл...")
+    is_running = False
+
+# Регистрируем перехват сигналов завершения (SIGTERM)
+signal.signal(signal.SIGTERM, handle_stop_signal)
+signal.signal(signal.SIGINT, handle_stop_signal)
 
 def get_recording_duration():
     now = datetime.datetime.now()
-    # Задаем целевое время — 18:00 текущего дня
     target_time = now.replace(hour=18, minute=0, second=0, microsecond=0)
-    
-    # Если скрипт запущен после 18:00, запись пойдет до 18:00 следующего дня
     if now >= target_time:
         target_time += datetime.timedelta(days=1)
-        
-    duration_seconds = (target_time - now).total_seconds()
-    return int(duration_seconds)
+    return int((target_time - now).total_seconds())
 
 def record_stream(duration, filename):
-    print(f"Запись радио начата. Будет идти {duration} сек. до 18:00.")
+    global is_running
+    print(f"Запись радио начата. Плановое время: {duration} сек. до 18:00.")
     start_time = time.time()
     
     try:
@@ -27,14 +36,15 @@ def record_stream(duration, filename):
         
         with open(filename, 'wb') as f:
             for chunk in response.iter_content(chunk_size=4096):
-                if time.time() - start_time > duration:
+                # Проверяем штатный таймер И нажатие кнопки "Остановить"
+                if not is_running or (time.time() - start_time > duration):
                     break
                 if chunk:
                     f.write(chunk)
                     
-        print(f"Запись успешно завершена и сохранена в файл: {filename}")
+        print(f"Запись успешно сохранена: {filename}")
     except Exception as e:
-        print(f"Произошла ошибка при записи потока: {e}")
+        print(f"Ошибка при записи: {e}")
 
 if __name__ == "__main__":
     seconds_to_record = get_recording_duration()
