@@ -82,7 +82,7 @@
                 if (mp3Files.length > 0) {
                     mp3Files.sort((a, b) => b.name.localeCompare(a.name));
                     
-                    // ТЕПЕРЬ ОШИБКА ИСПРАВЛЕНА: четко выбираем первый элемент массива [0]
+                    // ИСПРАВЛЕНО: Добавлен индекс [0], чтобы скрипт корректно выбирал первый файл
                     const latestFile = mp3Files[0]; 
                     
                     lastSavedFileUrl = latestFile.download_url;
@@ -176,7 +176,7 @@
 
                 const data = await response.json();
                 if (data.workflow_runs && data.workflow_runs.length > 0) {
-                    // ТЕПЕРЬ ОШИБКА ИСПРАВЛЕНА: четко выбираем первый элемент массива [0]
+                    // ИСПРАВЛЕНО: Добавлен индекс [0], чтобы скрипт считывал текущую задачу
                     const run = data.workflow_runs[0]; 
                     const status = run.status;
                     const conclusion = run.conclusion;
@@ -199,5 +199,4 @@
                         currentActiveRunId = null;
                         
                         recordBtn.disabled = false;
-                        recordBtn.style.opacity = '1';
-Используйте код с осторожностью.recordBtn.style.backgroundColor = '#d9534f';recordBtn.innerText = '🔴 Начать запись';stopBtn.disabled = true;stopBtn.style.backgroundColor = '#475569';stopBtn.style.opacity = '0.5';stopBtn.style.cursor = 'not-allowed';stopBtn.innerText = '⏹️ Стоп';if (status === 'completed' && conclusion === 'success') {statusBar.style.backgroundColor = '#22c55e';statusBar.innerText = '✅ Статус: Плеер остановлен (Запись сохранена)';} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен';}}} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен (Нет запусков)';}} catch (e) {console.error(e);statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Ошибка сети';}}fetchLastSavedFile();checkWorkflowStatus();setInterval(() => {checkWorkflowStatus();fetchLastSavedFile();}, 20000);
+Используйте код с осторожностью.recordBtn.style.opacity = '1';recordBtn.style.backgroundColor = '#d9534f';recordBtn.innerText = '🔴 Начать запись';stopBtn.disabled = true;stopBtn.style.backgroundColor = '#475569';stopBtn.style.opacity = '0.5';stopBtn.style.cursor = 'not-allowed';stopBtn.innerText = '⏹️ Стоп';if (status === 'completed' && conclusion === 'success') {statusBar.style.backgroundColor = '#22c55e';statusBar.innerText = '✅ Статус: Плеер остановлен (Запись сохранена)';} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен';}}} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен (Нет запусков)';}} catch (e) {console.error(e);statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Ошибка сети';}}fetchLastSavedFile();checkWorkflowStatus();setInterval(() => {checkWorkflowStatus();fetchLastSavedFile();}, 20000);
