@@ -12,13 +12,13 @@
         
         <!-- Плеер -->
         <div style="margin-bottom: 15px;">
-            <label id="audio-label" style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px; text-align: center;">Плеер: Пнямой эфир (или выберите запись)</label>
+            <label id="audio-label" style="font-size: 12px; color: #94a3b8; display: block; margin-bottom: 5px; text-align: center;">Плеер: Прямой эфир (или выберите запись)</label>
             <audio id="radio-audio" controls style="width: 100%;">
                 <source src="https://radio.5-tv.ru/radio.mp3" type="audio/mpeg">
             </audio>
         </div>
 
-        <!-- Кнопки прослушивания и скачивания последней записи -->
+        <!-- Кнопки работы со старыми записями -->
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
             <button id="listen-saved-btn" onclick="playLastSaved()" disabled style="flex: 1; padding: 10px; background-color: #3b82f6; color: white; border: none; border-radius: 5px; font-weight: bold; cursor: not-allowed; opacity: 0.5; font-size: 14px;">
                 🎧 Последняя запись
@@ -63,6 +63,7 @@
     </div>
 
     <script>
+        // ИСПРАВЛЕНО: Убран лишний пробел из имени пользователя GitHub
         const OWNER = 'vladislavtech84-cyber';
         const REPO = 'radio-player';
         
@@ -89,8 +90,6 @@
                 
                 if (mp3Files.length > 0) {
                     mp3Files.sort((a, b) => b.name.localeCompare(a.name));
-                    
-                    // ИСПРАВЛЕНО: Заменено .at(0) на классический индекс [0]
                     const latestFile = mp3Files[0]; 
                     
                     lastSavedFileUrl = latestFile.download_url;
@@ -187,7 +186,6 @@
 
                 const data = await response.json();
                 if (data.workflow_runs && data.workflow_runs.length > 0) {
-                    // ИСПРАВЛЕНО: Заменено .at(0) на классический индекс [0]
                     const run = data.workflow_runs[0]; 
                     const status = run.status;
                     const conclusion = run.conclusion;
@@ -195,4 +193,6 @@
                     if (status === 'in_progress' || status === 'queued') {
                         currentActiveRunId = run.id;
                         statusBar.style.backgroundColor = '#ef4444';
-Используйте код с осторожностью.statusBar.innerText = '🔴 Статус: Идет запись на GitHub...';recordBtn.disabled = true;recordBtn.style.opacity = '0.5';stopBtn.disabled = false;stopBtn.style.backgroundColor = '#dc2626';stopBtn.style.cursor = 'pointer';stopBtn.style.opacity = '1';stopBtn.innerText = '⏹️ Стоп';} else {currentActiveRunId = null;recordBtn.disabled = false;recordBtn.style.opacity = '1';recordBtn.style.backgroundColor = '#d9534f';recordBtn.innerText = '🔴 Начать запись';stopBtn.disabled = true;stopBtn.style.backgroundColor = '#475569';stopBtn.style.opacity = '0.5';stopBtn.innerText = '⏹️ Стоп';if (status === 'completed' && conclusion === 'success') {statusBar.style.backgroundColor = '#22c55e';statusBar.innerText = '✅ Статус: Плеер остановлен (Запись сохранена)';} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен';}}}} catch (e) { console.error(e); }}fetchLastSavedFile();checkWorkflowStatus();setInterval(() => {checkWorkflowStatus();fetchLastSavedFile();}, 20000);
+                        statusBar.innerText = '🔴 Статус: Идет запись на GitHub...';
+                        recordBtn.disabled = true;
+Используйте код с осторожностью.recordBtn.style.opacity = '0.5';stopBtn.disabled = false;stopBtn.style.backgroundColor = '#dc2626';stopBtn.style.cursor = 'pointer';stopBtn.style.opacity = '1';stopBtn.innerText = '⏹️ Стоп';} else {currentActiveRunId = null;recordBtn.disabled = false;recordBtn.style.opacity = '1';recordBtn.style.backgroundColor = '#d9534f';recordBtn.innerText = '🔴 Начать запись';stopBtn.disabled = true;stopBtn.style.backgroundColor = '#475569';stopBtn.style.opacity = '0.5';stopBtn.innerText = '⏹️ Стоп';if (status === 'completed' && conclusion === 'success') {statusBar.style.backgroundColor = '#22c55e';statusBar.innerText = '✅ Статус: Плеер остановлен (Запись сохранена)';} else {statusBar.style.backgroundColor = '#64748b';statusBar.innerText = 'Статус: Плеер остановлен';}}}} catch (e) { console.error(e); }}fetchLastSavedFile();checkWorkflowStatus();setInterval(() => {checkWorkflowStatus();fetchLastSavedFile();}, 20000);
