@@ -1,10 +1,10 @@
 name: Расписание Записи Радио
 
 on:
-  workflow_dispatch: # Позволяет запускать процесс вручную кнопкой в любое время
+  workflow_dispatch: # Оставляем кнопку для ручного запуска
   schedule:
-    # Автоматический запуск (опционально). Сейчас настроен на запуск каждый день в 00:00 UTC
-    - cron: '0 0 * * *'
+    # Запуск каждый день в 18:25 UTC (что соответствует 21:25 по МСК)
+    - cron: '25 18 * * *'
 
 jobs:
   record_audio:
@@ -21,8 +21,7 @@ jobs:
 
     - name: Запись потока (1 час)
       run: |
-        # -t 3600 — запись идет ровно 1 час
-        # -segment_time 1800 — делит часовой эфир на 2 файла по 30 минут, чтобы не превысить лимиты GitHub
+        # Запись идет ровно 1 час (3600 секунд)
         ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 3600 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Сохранение аудиофайлов в репозиторий
@@ -30,5 +29,5 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@://github.com"
         git add radio_*.mp3
-        git commit -m "Добавлен 1 час архивной записи радио"
+        git commit -m "Добавлен 1 час архивной записи радио по расписанию"
         git push
