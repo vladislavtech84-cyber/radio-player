@@ -1,3 +1,4 @@
+```python
 import datetime
 import time
 import requests
@@ -6,15 +7,13 @@ import sys
 
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
 is_running = True
-file_name = ""
 
-# Обработчик сигнала принудительной остановки от GitHub
+# Перехватываем команду отмены от кнопки "Стоп", чтобы корректно сохранить файл
 def handle_stop_signal(signum, frame):
     global is_running
-    print("\n[!] Получен сигнал остановки. Завершаем запись и сохраняем файл...")
+    print("\n[!] Получена команда экстренной остановки. Закрываем поток и сохраняем аудио...")
     is_running = False
 
-# Регистрируем перехват сигналов завершения (SIGTERM)
 signal.signal(signal.SIGTERM, handle_stop_signal)
 signal.signal(signal.SIGINT, handle_stop_signal)
 
@@ -27,7 +26,7 @@ def get_recording_duration():
 
 def record_stream(duration, filename):
     global is_running
-    print(f"Запись радио начата. Плановое время: {duration} сек. до 18:00.")
+    print(f"Запись радио начата. Будет идти {duration} сек. до 18:00.")
     start_time = time.time()
     
     try:
@@ -36,15 +35,15 @@ def record_stream(duration, filename):
         
         with open(filename, 'wb') as f:
             for chunk in response.iter_content(chunk_size=4096):
-                # Проверяем штатный таймер И нажатие кнопки "Остановить"
+                # Останавливаемся либо по таймеру 18:00, либо по кнопке Стоп
                 if not is_running or (time.time() - start_time > duration):
                     break
                 if chunk:
                     f.write(chunk)
                     
-        print(f"Запись успешно сохранена: {filename}")
+        print(f"Поток успешно записан и зафиксирован в файл: {filename}")
     except Exception as e:
-        print(f"Ошибка при записи: {e}")
+        print(f"Критическая ошибка стрима: {e}")
 
 if __name__ == "__main__":
     seconds_to_record = get_recording_duration()
