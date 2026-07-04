@@ -25,9 +25,9 @@ jobs:
     - name: Execute Python Recording Script
       run: python record.py
 
-    - name: Save Audio File to GitHub Repository
+    - name: Save Audio and Update HTML History
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action Radio Bot"
-        git add *.mp3
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Добавлена новая запись эфира radio" && git push)
+        git add *.mp3 index.html
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Авто-обновление: добавлен аудиофайл и запись в архив HTML" && git push)
