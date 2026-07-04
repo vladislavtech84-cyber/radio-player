@@ -1,27 +1,47 @@
-import urllib.request
+import datetime
 import time
-import sys
+import requests
 
+# Прямая ссылка на ваше радио (без изменений)
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
-RECORD_DURATION = 600 # 10 минут
-filename = "test_timer.mp3"
 
-print(f"Старт записи по таймеру в файл {filename} на {RECORD_DURATION} секунд...")
+def get_recording_duration():
+    now = datetime.datetime.now()
+    # Задаем целевое время — 18:00 текущего дня
+    target_time = now.replace(hour=18, minute=0, second=0, microsecond=0)
+    
+    # Если скрипт запущен после 18:00, запись пойдет до 18:00 следующего дня
+    if now >= target_time:
+        target_time += datetime.timedelta(days=1)
+        
+    duration_seconds = (target_time - now).total_seconds()
+    return int(duration_seconds)
 
-req = urllib.request.Request(
-    STREAM_URL, 
-    headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
-)
+def record_stream(duration, filename):
+    print(f"Запись радио начата. Будет идти {duration} сек. до 18:00.")
+    start_time = time.time()
+    
+    try:
+        # Подключаемся к аудиопотоку радио
+        response = requests.get(STREAM_URL, stream=True, timeout=15)
+        response.raise_for_status()
+        
+        with open(filename, 'wb') as f:
+            for chunk in response.iter_content(chunk_size=4096):
+                # Проверяем, не вышло ли время (до 18:00)
+                if time.time() - start_time > duration:
+                    break
+                if chunk:
+                    f.write(chunk)
+                    
+        print(f"Запись успешно завершена и сохранена в файл: {filename}")
+    except Exception as e:
+        print(f"Произошла ошибка при записи потока: {e}")
 
-try:
-    with urllib.request.urlopen(req) as response, open(filename, 'wb') as out_file:
-        start_time = time.time()
-        while time.time() - start_time < RECORD_DURATION:
-            chunk = response.read(1024 * 64)
-            if not chunk:
-                break
-            out_file.write(chunk)
-    print(f"Запись файла {filename} успешно завершена!")
-except Exception as e:
-    print(f"Ошибка при записи: {e}")
-    sys.exit(1)
+if __name__ == "__main__":
+    seconds_to_record = get_recording_duration()
+    # Имя файла будет содержать дату и время начала записи
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    file_name = f"radio_record_{timestamp}.mp3"
+    
+    record_stream(seconds_to_record, file_name)
