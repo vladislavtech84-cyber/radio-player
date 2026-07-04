@@ -2,7 +2,7 @@ import datetime
 import time
 import requests
 
-# Прямая ссылка на ваше радио (без изменений)
+# Прямая ссылка на ваше радио
 STREAM_URL = "https://radio.5-tv.ru/radio.mp3"
 
 def get_recording_duration():
@@ -22,13 +22,11 @@ def record_stream(duration, filename):
     start_time = time.time()
     
     try:
-        # Подключаемся к аудиопотоку радио
         response = requests.get(STREAM_URL, stream=True, timeout=15)
         response.raise_for_status()
         
         with open(filename, 'wb') as f:
             for chunk in response.iter_content(chunk_size=4096):
-                # Проверяем, не вышло ли время (до 18:00)
                 if time.time() - start_time > duration:
                     break
                 if chunk:
@@ -40,7 +38,6 @@ def record_stream(duration, filename):
 
 if __name__ == "__main__":
     seconds_to_record = get_recording_duration()
-    # Имя файла будет содержать дату и время начала записи
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     file_name = f"radio_record_{timestamp}.mp3"
     
