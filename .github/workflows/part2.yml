@@ -1,0 +1,32 @@
+name: Радио Часть 2 (13:00 - 19:00)
+
+on:
+  workflow_dispatch: # Позволяет первой части запустить этот скрипт
+
+jobs:
+  record_part_2:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Проверка репозитория
+      uses: actions/checkout@v4
+
+    - name: Установка FFmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Запись потока (6 часов)
+      run: |
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 21600 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+
+    - name: Сохранение аудиофайлов в репозиторий
+      if: always()
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        # Делаем pull, чтобы забрать файлы, сохраненные первой частью
+        git pull origin main --rebase
+        git add radio_*.mp3
+        git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 2 (до 19:00) сохранена"
+        git push
