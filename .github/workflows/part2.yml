@@ -6,6 +6,9 @@ on:
 jobs:
   record_part_2:
     runs-on: ubuntu-latest
+    # Даем права на запись файлов в репозиторий при автозапуске
+    permissions:
+      contents: write
 
     steps:
     - name: Проверка репозитория
@@ -24,7 +27,7 @@ jobs:
       if: always()
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
         # Делаем pull, чтобы забрать файлы, сохраненные первой частью
         git pull origin main --rebase
         git add radio_*.mp3
