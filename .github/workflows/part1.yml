@@ -1,12 +1,11 @@
-name: Радио Часть 1 (07:00 - 13:00)
+name: Радио Часть 1 (ТЕСТ 5 минут)
 
 on:
-  workflow_dispatch: # Запуск вручную вами в 07:00
+  workflow_dispatch: # Запуск вручную
 
 jobs:
   record_part_1:
     runs-on: ubuntu-latest
-    # Даем права на запуск других воркфлоу
     permissions:
       actions: write
       contents: write
@@ -20,9 +19,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg
 
-    - name: Запись потока (6 часов)
+    - name: Запись потока (5 минут)
       run: |
-        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 21600 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 300 -c copy -f segment -segment_time 300 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Сохранение аудиофайлов в репозиторий
       if: always()
@@ -30,11 +29,10 @@ jobs:
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@://github.com"
         git add radio_*.mp3
-        git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 1 (до 13:00) сохранена"
+        git diff-index --quiet HEAD || git commit -m "Архив радио. Тест Часть 1 (5 мин) сохранен"
         git push
 
     - name: Автозапуск Части 2
-      # Используем встроенный токен для вызова следующего файла
       run: |
         gh workflow run part2.yml
       env:
