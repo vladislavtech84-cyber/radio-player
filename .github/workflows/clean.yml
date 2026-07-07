@@ -1,0 +1,26 @@
+name: Полная очистка MP3 файлов
+
+on:
+  workflow_dispatch: # Запуск вручную кнопкой
+
+jobs:
+  delete_files:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Проверка репозитория
+      uses: actions/checkout@v4
+
+    - name: Удаление всех радио-файлов
+      run: |
+        rm -f radio_*.mp3
+        
+    - name: Сохранение изменений
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        git add .
+        git diff-index --quiet HEAD || git commit -m "Очистка репозитория от старых аудиофайлов"
+        git push
