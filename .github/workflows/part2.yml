@@ -1,7 +1,7 @@
 name: Радио Часть 2 (ТЕСТ 5 минут)
 
 on:
-  workflow_dispatch: # Запуск по сигналу от первой части
+  workflow_dispatch:
 
 jobs:
   record_part_2:
@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Проверка репозитория
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Установка FFmpeg
       run: |
@@ -20,7 +22,7 @@ jobs:
 
     - name: Запись потока (5 минут)
       run: |
-        ffmpeg -i "https://radio.5-.ru/radio.mp3" -t 300 -c copy -f segment -segment_time 300 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3." -t 300 -c copy -f segment -segment_time 300 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Сохранение аудиофайлов в репозиторий
       if: always()
