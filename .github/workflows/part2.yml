@@ -1,7 +1,7 @@
-name: Радио Часть 2 (ТЕСТ 5 часов)
+name: Радио Часть 2 (Автостарт - 5 часов)
 
 on:
-  workflow_dispatch:
+  workflow_dispatch: # Позволяет первой части вызвать этот скрипт
 
 jobs:
   record_part_2:
@@ -21,8 +21,9 @@ jobs:
         sudo apt-get install -y ffmpeg
 
     - name: Запись потока (5 часов)
+      # Сюда возвращены все утерянные настройки нарезки файлов по 30 минут
       run: |
-        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 1800 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 18000 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Сохранение аудиофайлов в репозиторий
       if: always()
@@ -31,5 +32,5 @@ jobs:
         git config --global user.email "41898282+github-actions[bot]@://github.com"
         git pull origin main --rebase
         git add radio_*.mp3
-        git diff-index --quiet HEAD || git commit -m "Архив радио. Тест Часть 2 (5 мин) сохранен"
+        git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 2 (5 часов) сохранена"
         git push
