@@ -1,4 +1,4 @@
-name: Радио Часть 2 (ТЕСТ 5 минут)
+name: Радио Часть 2 (ТЕСТ 5 часов)
 
 on:
   workflow_dispatch:
@@ -20,9 +20,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y ffmpeg
 
-    - name: Запись потока (5 минут)
+    - name: Запись потока (5 часов)
       run: |
-        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 300 -c copy -f segment -segment_time 300 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 1800 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Сохранение аудиофайлов в репозиторий
       if: always()
