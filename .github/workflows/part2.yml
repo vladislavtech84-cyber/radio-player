@@ -35,7 +35,7 @@ jobs:
         git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 2 (5 часов) сохранена"
         git push
 
-      - name: Автозапуск Части 3
+    - name: Автозапуск Части 3
       run: |
         gh workflow run part3.yml
       env:
