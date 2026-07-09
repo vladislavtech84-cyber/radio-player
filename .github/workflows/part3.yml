@@ -1,43 +1,60 @@
-name: Радио Часть 3 (Автостарт - 4 часа)
+name: Радио Часть 3 (Автостарт - 4 часа + Склейка)
 
 on:
-  workflow_dispatch: # Позволяет запускать вручную или вызывать через API
+  workflow_dispatch: # Позволяет второй части вызвать этот скрипт
 
 jobs:
-  record_part_3:
+  record_and_merge:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # Нужно для создания релиза и коммитов
 
     steps:
     - name: Проверка репозитория
       uses: actions/checkout@v4
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0 # Скачиваем всю историю, чтобы подтянуть все файлы
 
     - name: Установка FFmpeg
       run: |
         sudo apt-get update
         sudo apt-get install -y ffmpeg
 
-    - name: Запись потока (4 часа)
-      # Ограничение -t выставлено на 14400 секунд (ровно 4 часа)
-      # Нарезка -segment_time выставлена на 1800 секунд (30 минут)
+    - name: Запись потока (Последние 4 часа)
       run: |
         ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
-        -i "https://radio.5-tv.ru/radio.mp3" \
+        -i "https://5-tv.ru" \
         -t 300 \
         -c copy \
         -f segment \
         -segment_time 300 \
         -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
-    - name: Сохранение аудиофайлов в репозиторий
+    - name: Склейка ВСЕХ файлов за день
+      run: |
+        # Создаем список из абсолютно всех mp3 в папке, сортируя по дате
+        printf "file '%s'\n" $(ls -1 radio_*.mp3 | sort) > list.txt
+        
+        # Склеиваем в один большой файл без потери качества
+        ffmpeg -f concat -safe 0 -i list.txt -c copy "Radio_Full_Archive.mp3"
+        rm list.txt
+
+    - name: Публикация целого файла в GitHub Releases
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: "archive-${{ github.run_id }}"
+        name: "Архив радио от $(date +'%Y-%m-%d')"
+        files: "Radio_Full_Archive.mp3"
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Сохранение последних 30-минутных кусочков в репозиторий
       if: always()
       run: |
         git config --global user.name "github-actions[bot]"
-        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
         git pull origin main --rebase
+        rm -f Radio_Full_Archive.mp3 # Удаляем огромный файл, чтобы не пушить его в git
         git add radio_*.mp3
-        git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 3 (4 часа) сохранена"
+        git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 3 сохранена. Полный файл отправлен в Релизы."
         git push origin main
