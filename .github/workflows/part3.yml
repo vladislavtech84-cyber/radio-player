@@ -27,7 +27,7 @@ jobs:
         
         ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
           -i "$STREAM_URL" \
-          -t 14000 \
+          -t 14400 \
           -c copy \
           -f segment \
           -segment_time 1800 \
