@@ -1,10 +1,10 @@
-name: Радио Часть 2 (Автостарт - 5 часов)
+name: Радио Часть 2 (Ручной запуск - 5 часов)
 
 on:
-  workflow_dispatch: # Позволяет первой части вызвать этот скрипт
+  workflow_dispatch: # Запуск только вручную вами по кнопке
 
 jobs:
-  record_part_2:
+  record_part_1:
     runs-on: ubuntu-latest
     permissions:
       actions: write
@@ -13,56 +13,26 @@ jobs:
     steps:
       - name: Проверка репозитория
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Установка FFmpeg
         run: |
           sudo apt-get update
           sudo apt-get install -y ffmpeg
 
-      - name: Запись потока (5 часов с защитой от обрывов)
+      - name: Запись потока (5 часов)
         run: |
-          # Вычисляем время окончания (текущее время в секундах + 5 часов)
-          END_TIME=$(( $(date +%s) + 18000 ))
-          
-          # Цикл работает, пока не пройдут полные 5 часов
-          while [ $(date +%s) -lt $END_TIME ]; do
-            REMAINING_TIME=$(( END_TIME - $(date +%s) ))
-            
-            # Если осталось меньше 10 секунд, завершаем запись
-            if [ $REMAINING_TIME -le 10 ]; then break; fi
-            
-            echo "Старт записи. Осталось дописать: $REMAINING_TIME сек."
-            
-            # Запуск FFmpeg с флагами автопереподключения при сбое сети
-            ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 10 \
-            -i "https://datacenter.by" \
-            -t $REMAINING_TIME -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3" \
-            || echo "Поток прервался, ожидание 5 секунд перед перезапуском..."
-            
-            sleep 5
-          done
+          ffmpeg -i "https://radio.5-tv.ru/radio.mp3." -t 18000 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
       - name: Сохранение аудиофайлов в репозиторий
         if: always()
         run: |
           git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@://github.com"
-          git fetch origin main
-          git checkout main
-          
-          # Проверяем, появились ли новые файлы перед добавлением
-          if ls radio_*.mp3 1> /dev/null 2>&1; then
-            git add radio_*.mp3
-            git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 2 (5 часов) сохранена [skip ci]"
-            git push origin main
-          else
-            echo "Файлы для сохранения не найдены."
-          fi
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add radio_*.mp3
+          git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 2 (5 часов) сохранена"
+          git push
 
       - name: Автозапуск Части 3
-        if: success()
         run: |
           gh workflow run part3.yml
         env:
