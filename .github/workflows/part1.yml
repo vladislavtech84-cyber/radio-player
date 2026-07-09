@@ -21,7 +21,7 @@ jobs:
 
       - name: Запись потока (5 часов)
         run: |
-          ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i "https://radio.5-tv.ru/radio.mp3" -t 300 -c copy -f segment -segment_time 300 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+          ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i "https://radio.5-tv.ru/radio.mp3" -t 18000 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
       - name: Сохранение аудиофайлов в репозиторий
         if: always()
