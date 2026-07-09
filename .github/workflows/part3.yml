@@ -1,1 +1,36 @@
+name: Радио Часть 3 (Автостарт - 4 часа)
 
+on:
+  workflow_dispatch: # Позволяет первой части вызвать этот скрипт
+
+jobs:
+  record_part_3:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Проверка репозитория
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Установка FFmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+
+    - name: Запись потока (4 часа)
+      # Сюда возвращены все утерянные настройки нарезки файлов по 30 минут
+      run: |
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 300 -c copy -f segment -segment_time 300 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+
+    - name: Сохранение аудиофайлов в репозиторий
+      if: always()
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@://github.com"
+        git pull origin main --rebase
+        git add radio_*.mp3
+        git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 3 (4 часа) сохранена"
+        git push
