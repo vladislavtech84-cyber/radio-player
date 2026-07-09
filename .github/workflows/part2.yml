@@ -23,7 +23,7 @@ jobs:
     - name: Запись потока (5 часов)
       # Сюда возвращены все утерянные настройки нарезки файлов по 30 минут
       run: |
-        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 18000 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+        ffmpeg -i "https://radio.5-tv.ru/radio.mp3" -t 300 -c copy -f segment -segment_time 300 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Сохранение аудиофайлов в репозиторий
       if: always()
@@ -34,3 +34,9 @@ jobs:
         git add radio_*.mp3
         git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 2 (5 часов) сохранена"
         git push
+
+      - name: Автозапуск Части 3
+      run: |
+        gh workflow run part3.yml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
