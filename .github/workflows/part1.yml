@@ -1,4 +1,4 @@
-name: Радио Часть 1 (Ручной запуск - 5 часов)
+name: "Радио Часть 1 (Ручной запуск - 5 часов)"
 
 on:
   workflow_dispatch: # Запуск только вручную вами по кнопке
@@ -20,13 +20,15 @@ jobs:
           sudo apt-get install -y ffmpeg
 
       - name: Запись потока (5 часов)
+        # -t 18000 — это ровно 5 часов (5 * 60 * 60)
+        # -segment_time 1800 — нарезка на файлы по 30 минут
         run: |
           ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
           -i "https://radio.5-tv.ru/radio.mp3" \
-          -t 300 \
+          -t 18000 \
           -c copy \
           -f segment \
-          -segment_time 300 \
+          -segment_time 1800 \
           -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
           
       - name: Сохранение аудиофайлов в репозиторий
@@ -34,12 +36,14 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git pull origin main --rebase
           git add radio_*.mp3
           git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 1 (5 часов) сохранена"
-          git push
+          git push origin main
 
       - name: Автозапуск Части 2
+        # Убедитесь, что файл второй части называется именно так (например, part2.yml)
         run: |
           gh workflow run part2.yml
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
