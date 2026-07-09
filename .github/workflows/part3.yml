@@ -1,14 +1,14 @@
 name: Радио Часть 3 (Автостарт - 4 часа + Склейка)
 
 on:
-  workflow_dispatch: # Позволяет второй части вызвать этот скрипт
+  workflow_dispatch: # Позволяет вручную или через API запускать скрипт
 
 jobs:
   record_and_merge:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Нужно для создания релиза и коммитов
-
+      contents: write # Необходимо для записи файлов в репозиторий и создания релизов
+    
     steps:
     - name: Проверка репозитория
       uses: actions/checkout@v4
@@ -22,19 +22,21 @@ jobs:
 
     - name: Запись потока (Последние 4 часа)
       run: |
+        # Используется рабочий стрим-URL Радио «Петербург» от 5-tv.ru
+        STREAM_URL="http://5-tv.ru/radio.mp3" 
+        
         ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 \
-        -i "https://5-tv.ru" \
-        -t 300 \
-        -c copy \
-        -f segment \
-        -segment_time 300 \
-        -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+          -i "$STREAM_URL" \
+          -t 300 \
+          -c copy \
+          -f segment \
+          -segment_time 300 \
+          -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Склейка ВСЕХ файлов за день
       run: |
         # Создаем список из абсолютно всех mp3 в папке, сортируя по дате
         printf "file '%s'\n" $(ls -1 radio_*.mp3 | sort) > list.txt
-        
         # Склеиваем в один большой файл без потери качества
         ffmpeg -f concat -safe 0 -i list.txt -c copy "Radio_Full_Archive.mp3"
         rm list.txt
@@ -53,8 +55,10 @@ jobs:
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "41898282+github-actions[bot]@://github.com"
+        
         git pull origin main --rebase
         rm -f Radio_Full_Archive.mp3 # Удаляем огромный файл, чтобы не пушить его в git
+        
         git add radio_*.mp3
         git diff-index --quiet HEAD || git commit -m "Архив радио. Часть 3 сохранена. Полный файл отправлен в Релизы."
         git push origin main
