@@ -23,7 +23,7 @@ jobs:
     - name: Запись потока (4 часа)
       # Сюда возвращены все утерянные настройки нарезки файлов по 30 минут
       run: |
-        ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i "https://radio.5-tv.ru/radio.mp3" -t 4400 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
+        ffmpeg -reconnect 1 -reconnect_at_eof 1 -reconnect_streamed 1 -reconnect_delay_max 5 -i "https://radio.5-tv.ru/radio.mp3" -t 14400 -c copy -f segment -segment_time 1800 -strftime 1 "radio_%Y%m%d_%H%M%S.mp3"
 
     - name: Сохранение аудиофайлов в репозиторий
       if: always()
